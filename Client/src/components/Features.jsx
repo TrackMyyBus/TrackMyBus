@@ -15,7 +15,7 @@ export default function Features() {
   return (
     <main
       id="features"
-      className="relative bg-gradient-to-b from-yellow-50 to-white -mt-12 z-20 rounded-t-3xl shadow-lg">
+      className="pt-8 relative bg-gradient-to-b from-gray-50 to-gray-100 -mt-12 z-20 rounded-t-2xl">
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
           {/* Left: intro */}

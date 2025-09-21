@@ -14,6 +14,7 @@ export default function Hero() {
 
   return (
     <section
+      id="hero"
       className="relative h-[90vh] flex items-center bg-cover bg-center"
       style={{
         backgroundImage:
