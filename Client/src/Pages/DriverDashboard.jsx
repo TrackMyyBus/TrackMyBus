@@ -1,42 +1,164 @@
-// src/Pages/DriverDashboard.jsx
-import React from "react";
+import React, { useState } from "react";
 import { motion } from "framer-motion";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Progress } from "@/components/ui/progress";
+import { Switch } from "@/components/ui/switch";
+import { Badge } from "@/components/ui/badge";
+import {
+  FaBell,
+  FaRoute,
+  FaBusAlt,
+  FaRegClock,
+  FaMapMarkerAlt,
+} from "react-icons/fa";
 
 export default function DriverDashboard() {
+  const [tripStarted, setTripStarted] = useState(false);
+  const [progress, setProgress] = useState(0);
+  const [notifications, setNotifications] = useState([
+    "Pickup point updated near stop 3",
+    "Admin: Please confirm your route schedule.",
+  ]);
+
+  const handleTripToggle = () => {
+    if (!tripStarted) {
+      setTripStarted(true);
+      simulateTripProgress();
+    } else {
+      setTripStarted(false);
+      setProgress(0);
+    }
+  };
+
+  const simulateTripProgress = () => {
+    let current = 0;
+    const timer = setInterval(() => {
+      if (current >= 100 || !tripStarted) {
+        clearInterval(timer);
+      } else {
+        current += 10;
+        setProgress(current);
+      }
+    }, 1000);
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-yellow-50 to-white p-8">
       <h1 className="text-3xl font-extrabold text-indigo-900 mb-6">
         Driver Dashboard
       </h1>
 
-      {/* Map Placeholder */}
-      <motion.div
-        initial={{ opacity: 0, scale: 0.98 }}
-        animate={{ opacity: 1, scale: 1 }}
-        transition={{ duration: 0.5 }}
-        className="bg-white rounded-2xl shadow h-96 mb-6 flex items-center justify-center text-slate-500">
-        [Live Bus Map Placeholder]
-      </motion.div>
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* Route Info */}
+        <Card className="shadow-lg border-none">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-indigo-900">
+              <FaRoute /> Assigned Route
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-2 text-slate-600">
+            <p>
+              <strong>Bus No:</strong> MP09-B-2211
+            </p>
+            <p>
+              <strong>Route:</strong> Vijay Nagar → Palasia → College
+            </p>
+            <p>
+              <strong>Start Time:</strong> 7:30 AM
+            </p>
+            <p>
+              <strong>Estimated Arrival:</strong> 8:10 AM
+            </p>
+          </CardContent>
+        </Card>
 
-      {/* Routes & Notifications */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-        <motion.div
-          initial={{ opacity: 0, x: -20 }}
-          animate={{ opacity: 1, x: 0 }}
-          transition={{ duration: 0.5 }}
-          className="bg-white rounded-xl shadow p-6 text-center">
-          <h2 className="font-bold text-indigo-900 mb-2">Assigned Routes</h2>
-          <p className="text-slate-500">[Routes placeholder]</p>
-        </motion.div>
-        <motion.div
-          initial={{ opacity: 0, x: 20 }}
-          animate={{ opacity: 1, x: 0 }}
-          transition={{ duration: 0.5 }}
-          className="bg-white rounded-xl shadow p-6 text-center">
-          <h2 className="font-bold text-indigo-900 mb-2">Notifications</h2>
-          <p className="text-slate-500">[Alerts placeholder]</p>
-        </motion.div>
+        {/* Trip Control */}
+        <Card className="shadow-lg border-none">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-indigo-900">
+              <FaBusAlt /> Trip Control
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="flex items-center justify-between">
+              <p className="font-medium">Trip Status:</p>
+              <Badge
+                variant={tripStarted ? "default" : "secondary"}
+                className={tripStarted ? "bg-green-500" : "bg-gray-400"}
+              >
+                {tripStarted ? "Ongoing" : "Not Started"}
+              </Badge>
+            </div>
+
+            <Progress value={progress} className="h-3" />
+            <div className="flex justify-center">
+              <Button
+                onClick={handleTripToggle}
+                className={`w-full ${
+                  tripStarted
+                    ? "bg-red-500 hover:bg-red-600"
+                    : "bg-yellow-500 hover:bg-yellow-600"
+                }`}
+              >
+                {tripStarted ? "End Trip" : "Start Trip"}
+              </Button>
+            </div>
+
+            <div className="flex items-center justify-between mt-4">
+              <p>Enable Live Sharing</p>
+              <Switch checked={tripStarted} disabled={!tripStarted} />
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Notifications */}
+        <Card className="shadow-lg border-none">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-indigo-900">
+              <FaBell /> Notifications
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-3 text-slate-600">
+            {notifications.map((n, i) => (
+              <motion.div
+                key={i}
+                initial={{ opacity: 0, x: 10 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ duration: 0.3 }}
+                className="bg-yellow-50 p-3 rounded-lg shadow-sm"
+              >
+                {n}
+              </motion.div>
+            ))}
+          </CardContent>
+        </Card>
       </div>
+
+      {/* Map placeholder */}
+      <Card className="mt-8 shadow-lg border-none col-span-full">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2 text-indigo-900">
+            <FaMapMarkerAlt /> Live Bus Location
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="text-slate-600 h-64 flex items-center justify-center bg-gray-100 rounded-lg">
+          <span className="text-gray-500">Map will be displayed here</span>
+        </CardContent>
+      </Card>
+
+      {/* Bottom Status Bar */}
+      <motion.div
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="mt-10 bg-indigo-50 p-4 rounded-xl flex items-center justify-between shadow-md"
+      >
+        <div className="flex items-center gap-2 text-indigo-900 font-medium">
+          <FaRegClock />
+          {tripStarted ? "Trip in progress..." : "Awaiting trip start"}
+        </div>
+        <span className="text-slate-600 text-sm">Driver ID: D102</span>
+      </motion.div>
     </div>
   );
 }
