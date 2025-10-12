@@ -37,12 +37,14 @@ export default function StudentDashboard() {
             <p>
               <strong>Contact:</strong> +91 9876543210
             </p>
-            <p>
-              <strong>Status:</strong>{" "}
+            <div>
+              <p>
+                <strong>Status:</strong>
+              </p>
               <Badge variant="outline" className="bg-green-100 text-green-700">
-                On Time
+                Active
               </Badge>
-            </p>
+            </div>
           </CardContent>
         </Card>
 

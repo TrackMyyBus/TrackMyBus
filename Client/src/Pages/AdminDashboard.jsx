@@ -28,7 +28,8 @@ export default function AdminDashboard() {
       <aside
         className={`bg-white shadow-lg transition-all duration-300 ${
           sidebarOpen ? "w-64" : "w-16"
-        }`}>
+        }`}
+      >
         <div className="flex flex-col h-full">
           <div className="flex items-center justify-between px-4 py-4 border-b">
             {sidebarOpen && <span className="font-bold text-xl">Admin</span>}
@@ -56,7 +57,8 @@ export default function AdminDashboard() {
                 className={`flex items-center gap-2 w-full p-2 rounded hover:bg-yellow-100 ${
                   activeTab === item.key ? "bg-yellow-100" : ""
                 }`}
-                onClick={() => setActiveTab(item.key)}>
+                onClick={() => setActiveTab(item.key)}
+              >
                 {item.icon}
                 {sidebarOpen && item.label}
               </button>
@@ -128,7 +130,8 @@ function EditableTable({ data }) {
             {Object.keys(data[0]).map((key) => (
               <th
                 key={key}
-                className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase">
+                className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase"
+              >
                 {key.charAt(0).toUpperCase() + key.slice(1)}
               </th>
             ))}
@@ -195,7 +198,8 @@ function NotificationsSection() {
             key={note.id}
             className={`p-3 rounded shadow-sm ${
               note.type === "alert" ? "bg-red-100" : "bg-green-100"
-            }`}>
+            }`}
+          >
             <p className="font-medium">{note.message}</p>
             <span className="text-xs text-gray-500">{note.time}</span>
           </li>
@@ -228,7 +232,8 @@ function ChatSection() {
             key={idx}
             className={`p-2 rounded ${
               msg.sender === "You" ? "bg-yellow-100 text-right" : "bg-gray-100"
-            }`}>
+            }`}
+          >
             <p className="text-sm">
               <span className="font-semibold">{msg.sender}:</span> {msg.text}
             </p>
@@ -244,7 +249,8 @@ function ChatSection() {
         />
         <button
           className="bg-yellow-500 text-white px-4 rounded-r hover:bg-yellow-600"
-          onClick={sendMessage}>
+          onClick={sendMessage}
+        >
           Send
         </button>
       </div>

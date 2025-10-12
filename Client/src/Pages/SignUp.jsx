@@ -1,27 +1,56 @@
-// src/pages/Signup.jsx
-"use client";
-
-import React from "react";
+import React, { useState } from "react";
 import { motion } from "framer-motion";
-import { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
+import axios from "axios";
 
 export default function Signup() {
   const [form, setForm] = useState({
-    college: "",
+    name: "",
     email: "",
     password: "",
     confirmPassword: "",
+    role: "admin",
   });
 
-  const handleChange = (e) => {
-    setForm({ ...form, [e.target.name]: e.target.value });
-  };
+  const navigate = useNavigate();
 
-  const handleSubmit = (e) => {
+  const handleChange = (e) =>
+    setForm({ ...form, [e.target.name]: e.target.value });
+
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    // handle signup API call later
-    console.log(form);
+    if (form.password !== form.confirmPassword)
+      return alert("Passwords do not match");
+
+    try {
+      const res = await axios.post("http://localhost:5000/api/auth/signup", {
+        name: form.name,
+        email: form.email,
+        password: form.password,
+        role: form.role,
+      });
+
+      localStorage.setItem("token", res.data.token);
+      localStorage.setItem("role", res.data.user.role);
+      alert("Signup successful!");
+
+      // Redirect based on role
+      switch (res.data.user.role) {
+        case "admin":
+          navigate("/admin");
+          break;
+        case "driver":
+          navigate("/driver");
+          break;
+        case "student":
+          navigate("/student");
+          break;
+        default:
+          navigate("/");
+      }
+    } catch (err) {
+      alert(err.response?.data?.message || "Signup failed. Try again.");
+    }
   };
 
   return (
@@ -30,16 +59,17 @@ export default function Signup() {
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.6 }}
-        className="bg-white rounded-3xl shadow-xl p-10 w-full max-w-md">
+        className="bg-white rounded-3xl shadow-xl p-10 w-full max-w-md"
+      >
         <h2 className="text-2xl font-extrabold text-indigo-900 mb-6 text-center">
-          Admin Sign Up
+          Sign Up
         </h2>
         <form className="space-y-4" onSubmit={handleSubmit}>
           <input
             type="text"
-            name="college"
-            placeholder="College Name"
-            value={form.college}
+            name="name"
+            placeholder="Name"
+            value={form.name}
             onChange={handleChange}
             className="w-full px-4 py-2 rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition"
             required
@@ -71,15 +101,25 @@ export default function Signup() {
             className="w-full px-4 py-2 rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition"
             required
           />
-
+          <select
+            name="role"
+            value={form.role}
+            onChange={handleChange}
+            className="w-full px-4 py-2 rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition"
+          >
+            <option value="admin">Admin</option>
+            <option value="driver">Driver</option>
+            <option value="student">Student</option>
+          </select>
           <button
             type="submit"
-            className="w-full py-2 rounded-lg bg-yellow-500 hover:bg-yellow-600 text-white font-medium transition">
+            className="w-full py-2 rounded-lg bg-yellow-500 hover:bg-yellow-600 text-white font-medium transition"
+          >
             Sign Up
           </button>
         </form>
         <div className="flex justify-between mt-4 text-sm text-slate-600">
-          <p className="text-yellow-500 ">Already have an account ?</p>
+          <p className="text-yellow-500">Already have an account?</p>
           <Link to="/login" className="text-yellow-500 hover:underline">
             Login
           </Link>
