@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import Sidebar from "@/components/AdminDashboard/Sidebar";
 import DashboardOverview from "@/components/AdminDashboard/DashboardOverview";
-import EditableTable from "@/components/AdminDashboard/EditableTable";
+import ResponsiveTable from "@/components/AdminDashboard/ResponsiveTable"; // Updated
 import RoutesSection from "@/components/AdminDashboard/RoutesSection";
 import NotificationsSection from "@/components/AdminDashboard/NotificationsSection";
 import ChatSection from "@/components/AdminDashboard/ChatSection";
@@ -12,15 +12,14 @@ export default function AdminDashboard() {
     localStorage.getItem("activeTab") || "dashboard"
   );
 
-  // Sidebar open by default on desktop, closed on mobile
-  const [sidebarOpen, setSidebarOpen] = useState(window.innerWidth >= 768);
+  const [sidebarOpen, setSidebarOpen] = useState(
+    typeof window !== "undefined" ? window.innerWidth >= 768 : true
+  );
 
-  // Save active tab to localStorage
   useEffect(() => {
     localStorage.setItem("activeTab", activeTab);
   }, [activeTab]);
 
-  // Handle window resize
   useEffect(() => {
     const handleResize = () => {
       if (window.innerWidth >= 768) setSidebarOpen(true);
@@ -40,23 +39,19 @@ export default function AdminDashboard() {
         setActiveTab={setActiveTab}
       />
 
-      {/* Overlay for mobile when sidebar is open */}
-      {sidebarOpen && window.innerWidth < 768 && (
-        <div
-          className="fixed inset-0 bg-black/40 z-10 md:hidden"
-          onClick={() => setSidebarOpen(false)}></div>
-      )}
-
       {/* Main content */}
-      <main className="flex-1 p-4 md:p-6 transition-all duration-300">
+      <main
+        className={`flex-1 p-2 sm:p-4 md:p-6 transition-all duration-300 flex flex-col min-h-screen ${
+          sidebarOpen ? "md:ml-0" : "md:ml-16"
+        }`}>
         {activeTab === "dashboard" && <DashboardOverview />}
         {activeTab === "students" && (
-          <EditableTable data={students} type="Students" />
+          <ResponsiveTable data={students} type="Students" />
         )}
         {activeTab === "drivers" && (
-          <EditableTable data={drivers} type="Drivers" />
+          <ResponsiveTable data={drivers} type="Drivers" />
         )}
-        {activeTab === "buses" && <EditableTable data={buses} type="Buses" />}
+        {activeTab === "buses" && <ResponsiveTable data={buses} type="Buses" />}
         {activeTab === "routes" && <RoutesSection />}
         {activeTab === "notifications" && <NotificationsSection />}
         {activeTab === "chat" && <ChatSection />}

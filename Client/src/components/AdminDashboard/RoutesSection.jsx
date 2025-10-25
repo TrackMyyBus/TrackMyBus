@@ -10,8 +10,8 @@ export default function RoutesSection() {
   };
 
   return (
-    <div className="bg-gray-100 p-6 rounded-2xl shadow-lg">
-      <h2 className="text-2xl font-bold mb-6 text-gray-800">
+    <div className="bg-gray-100 p-6 ml-16 rounded-2xl shadow-lg">
+      <h2 className="text-3xl font-extrabold text-indigo-900 mb-6">
         Bus Routes Overview
       </h2>
       <ul className="space-y-4">

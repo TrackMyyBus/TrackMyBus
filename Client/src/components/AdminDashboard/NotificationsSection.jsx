@@ -4,8 +4,10 @@ import { FaExclamationCircle, FaCheckCircle } from "react-icons/fa";
 
 export default function NotificationsSection() {
   return (
-    <div className="bg-gray-100 p-6 rounded-2xl shadow-lg">
-      <h2 className="text-2xl font-bold mb-6 text-gray-800">Notifications</h2>
+    <div className="bg-gray-100 ml-16 p-6 rounded-2xl shadow-lg">
+      <h2 className="text-3xl font-extrabold text-indigo-900 mb-6">
+        Notifications
+      </h2>
       <ul className="space-y-4 max-h-[60vh] overflow-y-auto">
         {notifications.admin.map((note) => (
           <li

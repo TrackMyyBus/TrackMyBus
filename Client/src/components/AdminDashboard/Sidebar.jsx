@@ -1,4 +1,3 @@
-// src/Components/Sidebar/Sidebar.jsx
 import React from "react";
 import {
   FaBars,
@@ -31,22 +30,23 @@ export default function Sidebar({
     { key: "chat", label: "Chat", icon: <FaComments /> },
   ];
 
-  // ✅ Logout function
   const handleLogout = () => {
-    localStorage.removeItem("token"); // Remove JWT token
-    localStorage.removeItem("activeTab"); // Optional: Clear active tab
-    navigate("/"); // Redirect to login page
+    localStorage.removeItem("token");
+    localStorage.removeItem("activeTab");
+    navigate("/");
   };
 
   return (
     <aside
-      className={`bg-white shadow-lg transition-all duration-300 fixed md:relative h-full z-40 ${
+      className={`bg-white shadow-lg fixed  md:relative z-40 transition-all duration-300 ${
         sidebarOpen ? "w-64" : "w-16"
       }`}>
       <div className="flex flex-col h-full">
         <div className="flex items-center justify-between px-4 py-4 border-b">
           {sidebarOpen && <span className="font-bold text-xl">Admin</span>}
-          <button onClick={() => setSidebarOpen(!sidebarOpen)}>
+          <button
+            className="md:hidden"
+            onClick={() => setSidebarOpen(!sidebarOpen)}>
             {sidebarOpen ? <FaTimes /> : <FaBars />}
           </button>
         </div>
@@ -65,7 +65,6 @@ export default function Sidebar({
           ))}
         </nav>
 
-        {/* ✅ Logout Button */}
         <div className="p-2 border-t">
           <button
             onClick={handleLogout}
