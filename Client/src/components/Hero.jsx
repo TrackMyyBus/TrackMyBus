@@ -3,6 +3,7 @@
 
 import React from "react";
 import { motion } from "framer-motion";
+import { Link as RouterLink, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 
 export default function Hero() {
@@ -43,9 +44,11 @@ export default function Hero() {
             Know where your bus is — every step of the way! Stay informed with
             live GPS tracking and instant alerts.
           </p>
-          <Button className="bg-gray-100 text-black hover:bg-yellow-400 hover:font-bold px-6 py-3 rounded-lg font-semibold">
-            Get Started
-          </Button>
+          <RouterLink to="/login">
+            <Button className="bg-gray-100 text-black hover:bg-yellow-400 hover:font-bold px-6 py-3 rounded-lg font-semibold">
+              Get Started
+            </Button>
+          </RouterLink>
         </motion.div>
       </div>
     </section>

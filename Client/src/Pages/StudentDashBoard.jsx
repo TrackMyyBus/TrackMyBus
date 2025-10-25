@@ -3,7 +3,15 @@ import { motion } from "framer-motion";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { FaBell, FaClock, FaBus, FaRoad, FaMapMarkerAlt } from "react-icons/fa";
+import { useNavigate } from "react-router-dom";
+import {
+  FaBell,
+  FaClock,
+  FaBus,
+  FaRoad,
+  FaMapMarkerAlt,
+  FaSignOutAlt,
+} from "react-icons/fa";
 
 export default function StudentDashboard() {
   const [eta, setEta] = useState("5 mins");
@@ -12,13 +20,26 @@ export default function StudentDashboard() {
     "Bus 101 left Vijay Nagar stop.",
     "Slight delay due to traffic near Palasia.",
   ]);
+  const navigate = useNavigate();
+
+  const handleLogout = () => {
+    localStorage.removeItem("token");
+    localStorage.removeItem("activeTab");
+    navigate("/");
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-yellow-50 to-white p-8">
-      <h1 className="text-3xl font-extrabold text-indigo-900 mb-6">
-        Student Dashboard
-      </h1>
-
+      <div className="flex items-center justify-between mb-6">
+        <h1 className="text-3xl font-extrabold text-indigo-900">
+          Student Dashboard
+        </h1>
+        <button
+          onClick={handleLogout}
+          className="flex items-center gap-2 px-4 py-2 rounded-lg hover:bg-red-100 text-red-600 font-medium transition-colors">
+          <FaSignOutAlt /> Logout
+        </button>
+      </div>
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Bus Info */}
         <Card className="shadow-lg border-none">
@@ -71,8 +92,7 @@ export default function StudentDashboard() {
                 isTracking
                   ? "bg-red-500 hover:bg-red-600"
                   : "bg-yellow-500 hover:bg-yellow-600"
-              }`}
-            >
+              }`}>
               {isTracking ? "Stop Tracking" : "Track My Bus"}
             </Button>
           </CardContent>
@@ -92,8 +112,7 @@ export default function StudentDashboard() {
                 initial={{ opacity: 0, x: 10 }}
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ duration: 0.3 }}
-                className="bg-yellow-50 p-3 rounded-lg shadow-sm"
-              >
+                className="bg-yellow-50 p-3 rounded-lg shadow-sm">
                 {n}
               </motion.div>
             ))}
@@ -117,8 +136,7 @@ export default function StudentDashboard() {
       <motion.div
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
-        className="mt-10 bg-indigo-50 p-4 rounded-xl flex items-center justify-between shadow-md"
-      >
+        className="mt-10 bg-indigo-50 p-4 rounded-xl flex items-center justify-between shadow-md">
         <div className="flex items-center gap-2 text-indigo-900 font-medium">
           <FaClock />
           {isTracking

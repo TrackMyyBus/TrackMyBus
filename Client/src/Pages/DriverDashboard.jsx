@@ -5,21 +5,30 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
+import { useNavigate } from "react-router-dom";
 import {
   FaBell,
   FaRoute,
   FaBusAlt,
   FaRegClock,
   FaMapMarkerAlt,
+  FaSignOutAlt,
 } from "react-icons/fa";
 
 export default function DriverDashboard() {
+  const navigate = useNavigate();
   const [tripStarted, setTripStarted] = useState(false);
   const [progress, setProgress] = useState(0);
   const [notifications, setNotifications] = useState([
     "Pickup point updated near stop 3",
     "Admin: Please confirm your route schedule.",
   ]);
+
+  const handleLogout = () => {
+    localStorage.removeItem("token");
+    localStorage.removeItem("activeTab");
+    navigate("/"); // redirect to login page
+  };
 
   const handleTripToggle = () => {
     if (!tripStarted) {
@@ -34,9 +43,8 @@ export default function DriverDashboard() {
   const simulateTripProgress = () => {
     let current = 0;
     const timer = setInterval(() => {
-      if (current >= 100 || !tripStarted) {
-        clearInterval(timer);
-      } else {
+      if (current >= 100 || !tripStarted) clearInterval(timer);
+      else {
         current += 10;
         setProgress(current);
       }
@@ -44,10 +52,18 @@ export default function DriverDashboard() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-yellow-50 to-white p-8">
-      <h1 className="text-3xl font-extrabold text-indigo-900 mb-6">
-        Driver Dashboard
-      </h1>
+    <div className="min-h-screen bg-gradient-to-br from-yellow-50 to-white p-6 sm:p-8">
+      {/* Header with Logout */}
+      <div className="flex flex-col sm:flex-row justify-between items-center mb-6">
+        <h1 className="text-3xl font-extrabold text-indigo-900">
+          Driver Dashboard
+        </h1>
+        <button
+          onClick={handleLogout}
+          className="flex items-center gap-2 px-4 py-2 rounded-lg hover:bg-red-100 text-red-600 font-medium transition-colors">
+          <FaSignOutAlt /> Logout
+        </button>
+      </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Route Info */}
@@ -85,25 +101,21 @@ export default function DriverDashboard() {
               <p className="font-medium">Trip Status:</p>
               <Badge
                 variant={tripStarted ? "default" : "secondary"}
-                className={tripStarted ? "bg-green-500" : "bg-gray-400"}
-              >
+                className={tripStarted ? "bg-green-500" : "bg-gray-400"}>
                 {tripStarted ? "Ongoing" : "Not Started"}
               </Badge>
             </div>
 
             <Progress value={progress} className="h-3" />
-            <div className="flex justify-center">
-              <Button
-                onClick={handleTripToggle}
-                className={`w-full ${
-                  tripStarted
-                    ? "bg-red-500 hover:bg-red-600"
-                    : "bg-yellow-500 hover:bg-yellow-600"
-                }`}
-              >
-                {tripStarted ? "End Trip" : "Start Trip"}
-              </Button>
-            </div>
+            <Button
+              onClick={handleTripToggle}
+              className={`w-full ${
+                tripStarted
+                  ? "bg-red-500 hover:bg-red-600"
+                  : "bg-yellow-500 hover:bg-yellow-600"
+              }`}>
+              {tripStarted ? "End Trip" : "Start Trip"}
+            </Button>
 
             <div className="flex items-center justify-between mt-4">
               <p>Enable Live Sharing</p>
@@ -126,8 +138,7 @@ export default function DriverDashboard() {
                 initial={{ opacity: 0, x: 10 }}
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ duration: 0.3 }}
-                className="bg-yellow-50 p-3 rounded-lg shadow-sm"
-              >
+                className="bg-yellow-50 p-3 rounded-lg shadow-sm">
                 {n}
               </motion.div>
             ))}
@@ -151,8 +162,7 @@ export default function DriverDashboard() {
       <motion.div
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
-        className="mt-10 bg-indigo-50 p-4 rounded-xl flex items-center justify-between shadow-md"
-      >
+        className="mt-10 bg-indigo-50 p-4 rounded-xl flex flex-col sm:flex-row items-center justify-between shadow-md gap-2">
         <div className="flex items-center gap-2 text-indigo-900 font-medium">
           <FaRegClock />
           {tripStarted ? "Trip in progress..." : "Awaiting trip start"}
