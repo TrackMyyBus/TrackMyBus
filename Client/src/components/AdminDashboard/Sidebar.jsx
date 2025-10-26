@@ -45,9 +45,7 @@ export default function Sidebar({
       <div className="flex flex-col h-full">
         <div className="flex items-center justify-between px-4 py-4 border-b">
           {sidebarOpen && <span className="font-bold text-xl">Admin</span>}
-          <button
-            className="md:hidden"
-            onClick={() => setSidebarOpen(!sidebarOpen)}>
+          <button className="" onClick={() => setSidebarOpen(!sidebarOpen)}>
             {sidebarOpen ? <FaTimes /> : <FaBars />}
           </button>
         </div>
