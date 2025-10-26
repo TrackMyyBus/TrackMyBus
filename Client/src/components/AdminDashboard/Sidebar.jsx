@@ -9,6 +9,7 @@ import {
   FaBell,
   FaComments,
   FaSignOutAlt,
+  FaKey,
 } from "react-icons/fa";
 import { useNavigate } from "react-router-dom";
 
@@ -66,6 +67,12 @@ export default function Sidebar({
         </nav>
 
         <div className="p-2 border-t">
+          <button
+            onClick={() => navigate("/update-password")}
+            className="flex items-center gap-2 w-full p-2 rounded hover:bg-yellow-100 text-yellow-600 transition-colors">
+            <FaKey />
+            {sidebarOpen && "Reset Password"}
+          </button>
           <button
             onClick={handleLogout}
             className="flex items-center gap-2 w-full p-2 rounded hover:bg-red-100 text-red-600 transition-colors">

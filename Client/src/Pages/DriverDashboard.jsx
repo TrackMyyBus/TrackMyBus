@@ -13,10 +13,19 @@ import {
   FaRegClock,
   FaMapMarkerAlt,
   FaSignOutAlt,
+  FaCog,
+  FaKey,
 } from "react-icons/fa";
+import {
+  DropdownMenu,
+  DropdownMenuTrigger,
+  DropdownMenuContent,
+  DropdownMenuItem,
+} from "@/components/ui/dropdown-menu";
 
 export default function DriverDashboard() {
   const navigate = useNavigate();
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [tripStarted, setTripStarted] = useState(false);
   const [progress, setProgress] = useState(0);
   const [notifications, setNotifications] = useState([
@@ -54,15 +63,32 @@ export default function DriverDashboard() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-yellow-50 to-white p-6 sm:p-8">
       {/* Header with Logout */}
-      <div className="flex flex-col sm:flex-row justify-between items-center mb-6">
+      <div className="flex items-center justify-between mb-6">
         <h1 className="text-3xl font-extrabold text-indigo-900">
           Driver Dashboard
         </h1>
-        <button
-          onClick={handleLogout}
-          className="flex items-center gap-2 px-4 py-2 rounded-lg hover:bg-red-100 text-red-600 font-medium transition-colors">
-          <FaSignOutAlt /> Logout
-        </button>
+        <div className="relative">
+          <button
+            onClick={() => setIsMenuOpen(!isMenuOpen)}
+            className="p-2 rounded-full hover:bg-indigo-100 transition">
+            <FaCog className="text-indigo-900 text-2xl" />
+          </button>
+
+          {isMenuOpen && (
+            <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 z-10">
+              <button
+                onClick={() => navigate("/update-password")}
+                className="w-full flex items-center gap-2 px-4 py-2 hover:bg-indigo-50 text-indigo-800">
+                <FaKey /> Reset Password
+              </button>
+              <button
+                onClick={handleLogout}
+                className="w-full flex items-center gap-2 px-4 py-2 hover:bg-red-50 text-red-600">
+                <FaSignOutAlt /> Logout
+              </button>
+            </div>
+          )}
+        </div>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">

@@ -3,6 +3,7 @@ import mongoose from "mongoose";
 import cors from "cors";
 import dotenv from "dotenv";
 import authRoutes from "./routes/auth.js";
+import passwordRoutes from "./routes/password.js";
 
 dotenv.config();
 
@@ -12,6 +13,7 @@ app.use(express.json());
 
 app.get("/", (req, res) => res.send("TrackMyBus running successfully"));
 app.use("/api/auth", authRoutes);
+app.use("/api/password", passwordRoutes);
 
 mongoose
     .connect(process.env.MONGO_URI, {
