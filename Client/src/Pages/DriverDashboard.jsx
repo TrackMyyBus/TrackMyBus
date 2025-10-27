@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -16,29 +16,32 @@ import {
   FaCog,
   FaKey,
 } from "react-icons/fa";
-import {
-  DropdownMenu,
-  DropdownMenuTrigger,
-  DropdownMenuContent,
-  DropdownMenuItem,
-} from "@/components/ui/dropdown-menu";
+import Map from "@/components/Map";
+import "leaflet/dist/leaflet.css";
 
 export default function DriverDashboard() {
   const navigate = useNavigate();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [tripStarted, setTripStarted] = useState(false);
   const [progress, setProgress] = useState(0);
+  const [sharing, setSharing] = useState(false);
+  const [busLocation, setBusLocation] = useState(null);
+  const [watchId, setWatchId] = useState(null);
   const [notifications, setNotifications] = useState([
     "Pickup point updated near stop 3",
     "Admin: Please confirm your route schedule.",
   ]);
 
+  const busId = "BUS101"; // Unique bus ID (should match StudentDashboard)
+
+  // -------- Handle Logout --------
   const handleLogout = () => {
     localStorage.removeItem("token");
     localStorage.removeItem("activeTab");
     navigate("/"); // redirect to login page
   };
 
+  // -------- Trip Control --------
   const handleTripToggle = () => {
     if (!tripStarted) {
       setTripStarted(true);
@@ -46,6 +49,7 @@ export default function DriverDashboard() {
     } else {
       setTripStarted(false);
       setProgress(0);
+      stopSharingLocation();
     }
   };
 
@@ -59,6 +63,45 @@ export default function DriverDashboard() {
       }
     }, 1000);
   };
+
+  // -------- Location Sharing --------
+  const startSharingLocation = () => {
+    if ("geolocation" in navigator) {
+      const id = navigator.geolocation.watchPosition(
+        async (pos) => {
+          const { latitude, longitude } = pos.coords;
+          setBusLocation({ latitude, longitude });
+          try {
+            await fetch("http://localhost:8080/api/bus-location/update", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ busId, latitude, longitude }),
+            });
+          } catch (err) {
+            console.error("Failed to update location:", err);
+          }
+        },
+        (err) => console.error("GPS error:", err),
+        { enableHighAccuracy: true, timeout: 5000, maximumAge: 0 }
+      );
+      setWatchId(id);
+      setSharing(true);
+    } else {
+      alert("Geolocation not supported!");
+    }
+  };
+
+  const stopSharingLocation = () => {
+    if (watchId) {
+      navigator.geolocation.clearWatch(watchId);
+      setWatchId(null);
+    }
+    setSharing(false);
+  };
+
+  useEffect(() => {
+    if (!tripStarted) stopSharingLocation();
+  }, [tripStarted]);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-yellow-50 to-white p-6 sm:p-8">
@@ -145,7 +188,13 @@ export default function DriverDashboard() {
 
             <div className="flex items-center justify-between mt-4">
               <p>Enable Live Sharing</p>
-              <Switch checked={tripStarted} disabled={!tripStarted} />
+              <Switch
+                checked={sharing}
+                disabled={!tripStarted}
+                onCheckedChange={(checked) =>
+                  checked ? startSharingLocation() : stopSharingLocation()
+                }
+              />
             </div>
           </CardContent>
         </Card>
@@ -172,15 +221,15 @@ export default function DriverDashboard() {
         </Card>
       </div>
 
-      {/* Map placeholder */}
+      {/* Live Map Section */}
       <Card className="mt-8 shadow-lg border-none col-span-full">
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-indigo-900">
             <FaMapMarkerAlt /> Live Bus Location
           </CardTitle>
         </CardHeader>
-        <CardContent className="text-slate-600 h-64 flex items-center justify-center bg-gray-100 rounded-lg">
-          <span className="text-gray-500">Map will be displayed here</span>
+        <CardContent>
+          <Map location={busLocation} height="300px" />
         </CardContent>
       </Card>
 

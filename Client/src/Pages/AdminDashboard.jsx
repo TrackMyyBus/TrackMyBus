@@ -5,6 +5,7 @@ import ResponsiveTable from "@/components/AdminDashboard/ResponsiveTable"; // Up
 import RoutesSection from "@/components/AdminDashboard/RoutesSection";
 import NotificationsSection from "@/components/AdminDashboard/NotificationsSection";
 import ChatSection from "@/components/AdminDashboard/ChatSection";
+import BusLocationPage from "@/components/AdminDashboard/BusLocationPage";
 import { students, drivers, buses } from "@/lib/mock-data";
 
 export default function AdminDashboard() {
@@ -55,6 +56,7 @@ export default function AdminDashboard() {
         {activeTab === "routes" && <RoutesSection />}
         {activeTab === "notifications" && <NotificationsSection />}
         {activeTab === "chat" && <ChatSection />}
+        {activeTab === "busLocations" && <BusLocationPage />}
       </main>
     </div>
   );

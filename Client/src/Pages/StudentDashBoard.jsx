@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -14,16 +14,28 @@ import {
   FaCog,
   FaKey,
 } from "react-icons/fa";
-import {
-  DropdownMenu,
-  DropdownMenuTrigger,
-  DropdownMenuContent,
-  DropdownMenuItem,
-} from "@/components/ui/dropdown-menu";
+import io from "socket.io-client";
+import { MapContainer, TileLayer, Marker, Popup } from "react-leaflet";
+import "leaflet/dist/leaflet.css";
+import L from "leaflet";
+
+// Fix marker icons
+delete L.Icon.Default.prototype._getIconUrl;
+L.Icon.Default.mergeOptions({
+  iconRetinaUrl:
+    "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon-2x.png",
+  iconUrl:
+    "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon.png",
+  shadowUrl:
+    "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png",
+});
+
+const socket = io("http://localhost:5000");
 
 export default function StudentDashboard() {
   const [eta, setEta] = useState("5 mins");
   const [isTracking, setIsTracking] = useState(false);
+  const [busLocation, setBusLocation] = useState(null);
   const [notifications, setNotifications] = useState([
     "Bus 101 left Vijay Nagar stop.",
     "Slight delay due to traffic near Palasia.",
@@ -37,6 +49,15 @@ export default function StudentDashboard() {
     localStorage.removeItem("activeTab");
     navigate("/");
   };
+
+  useEffect(() => {
+    // listen for live updates from driver
+    socket.on("busLocationUpdate", (data) => {
+      setBusLocation(data);
+    });
+
+    return () => socket.off("busLocationUpdate");
+  }, []);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-yellow-50 to-white p-8">
@@ -67,6 +88,7 @@ export default function StudentDashboard() {
           )}
         </div>
       </div>
+
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Bus Info */}
         <Card className="shadow-lg border-none">
@@ -147,19 +169,38 @@ export default function StudentDashboard() {
         </Card>
       </div>
 
-      {/* Map placeholder */}
+      {/* Map Section */}
       <Card className="mt-8 shadow-lg border-none col-span-full">
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-indigo-900">
-            <FaMapMarkerAlt /> Bus Location Map
+            <FaMapMarkerAlt /> Live Bus Location
           </CardTitle>
         </CardHeader>
-        <CardContent className="text-slate-600 h-64 flex items-center justify-center bg-gray-100 rounded-lg">
-          <span className="text-gray-500">Map will be displayed here</span>
+        <CardContent>
+          {busLocation ? (
+            <MapContainer
+              center={[busLocation.lat, busLocation.lng]}
+              zoom={14}
+              style={{ height: "350px", width: "100%", borderRadius: "12px" }}>
+              <TileLayer
+                url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                attribution="&copy; OpenStreetMap contributors"
+              />
+              <Marker position={[busLocation.lat, busLocation.lng]}>
+                <Popup>🚌 Bus is here</Popup>
+              </Marker>
+            </MapContainer>
+          ) : (
+            <p className="text-center text-slate-500">
+              {isTracking
+                ? "Waiting for driver location..."
+                : "Click 'Track My Bus' to start tracking"}
+            </p>
+          )}
         </CardContent>
       </Card>
 
-      {/* Footer bar */}
+      {/* Footer */}
       <motion.div
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}

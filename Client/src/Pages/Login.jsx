@@ -18,7 +18,7 @@ export default function Login() {
         form
       );
       localStorage.setItem("token", res.data.token);
-      localStorage.setItem("role", res.data.user.role);
+      localStorage.setItem("user", JSON.stringify(res.data.user));
 
       // redirect based on role
       if (res.data.user.role === "admin") navigate("/admin");
@@ -35,8 +35,7 @@ export default function Login() {
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.6 }}
-        className="bg-white rounded-3xl shadow-xl p-10 w-full max-w-md"
-      >
+        className="bg-white rounded-3xl shadow-xl p-10 w-full max-w-md">
         <h2 className="text-2xl font-extrabold text-indigo-900 mb-6 text-center">
           Login
         </h2>
@@ -61,16 +60,14 @@ export default function Login() {
           />
           <button
             type="submit"
-            className="w-full py-2 rounded-lg bg-yellow-500 hover:bg-yellow-600 text-white font-medium transition"
-          >
+            className="w-full py-2 rounded-lg bg-yellow-500 hover:bg-yellow-600 text-white font-medium transition">
             Login
           </button>
         </form>
         <div className="flex justify-between mt-4 text-sm text-slate-600">
           <Link
             to="/update-password"
-            className="text-yellow-500 hover:underline"
-          >
+            className="text-yellow-500 hover:underline">
             Forgot Password?
           </Link>
           <Link to="/signup" className="text-yellow-500 hover:underline">

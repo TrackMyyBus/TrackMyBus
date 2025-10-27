@@ -10,6 +10,7 @@ import {
   FaComments,
   FaSignOutAlt,
   FaKey,
+  FaMapMarkerAlt,
 } from "react-icons/fa";
 import { useNavigate } from "react-router-dom";
 
@@ -29,6 +30,7 @@ export default function Sidebar({
     { key: "routes", label: "Routes", icon: <FaRoute /> },
     { key: "notifications", label: "Notifications", icon: <FaBell /> },
     { key: "chat", label: "Chat", icon: <FaComments /> },
+    { key: "busLocations", label: "Bus Locations", icon: <FaMapMarkerAlt /> },
   ];
 
   const handleLogout = () => {
