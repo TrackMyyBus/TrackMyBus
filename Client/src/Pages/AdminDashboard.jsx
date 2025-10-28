@@ -44,7 +44,8 @@ export default function AdminDashboard() {
       <main
         className={`flex-1 p-2 sm:p-4 md:p-6 transition-all duration-300 flex flex-col min-h-screen ${
           sidebarOpen ? "md:ml-0" : "md:ml-16"
-        }`}>
+        }`}
+      >
         {activeTab === "dashboard" && <DashboardOverview />}
         {activeTab === "students" && (
           <ResponsiveTable data={students} type="Students" />

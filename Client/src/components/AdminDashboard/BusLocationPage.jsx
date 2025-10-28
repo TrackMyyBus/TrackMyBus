@@ -65,7 +65,8 @@ export default function BusLocationPage() {
             height: "96%",
             width: "96%",
             margin: "20px",
-          }}>
+          }}
+        >
           <TileLayer
             url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
             attribution="© OpenStreetMap contributors"

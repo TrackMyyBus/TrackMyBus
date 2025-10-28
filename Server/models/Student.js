@@ -1,74 +1,45 @@
 import mongoose from "mongoose";
 
 const studentSchema = new mongoose.Schema({
-    // Reference to which institute/admin created this student
-    institute: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: "Admin",
-        required: true,
-    },
+  institute: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "Admin",
+    required: true,
+  },
 
-    // Basic student info
-    name: {
-        type: String,
-        required: true,
-        trim: true,
-    },
-    enrollmentId: {
-        type: String,
-        required: true,
-        unique: true,
-    },
-    enrollmentYear: {
-        type: Number,
-        required: true,
-    },
-    email: {
-        type: String,
-        required: true,
-        unique: true,
-    },
-    contactNumber: {
-        type: String,
-        required: true,
-    },
-    address: {
-        type: String,
-    },
+  name: { type: String, required: true, trim: true },
 
-    // Bus information
-    busNumber: {
-        type: String, // internal bus code like BUS001
-        required: true,
-    },
-    busPlateNumber: {
-        type: String, // actual number on the bus plate
-        required: true,
-    },
+  enrollmentId: { type: String, required: true, unique: true },
 
-    // References
-    assignedDriver: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: "Driver",
-        required: true,
-    },
-    assignedRoute: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: "Route",
-        required: true,
-    },
+  enrollmentYear: { type: Number, required: true },
 
-    status: {
-        type: String,
-        enum: ["active", "inactive"],
-        default: "active",
-    },
+  email: { type: String, required: true, unique: true },
 
-    // Time info
-    createdAt: {
-        type: Date,
-        default: Date.now,
-    },
+  contactNumber: { type: String, required: true },
+
+  address: { type: String },
+
+  assignedBus: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "Bus",
+    required: true,
+  },
+
+  assignedDriver: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "Driver",
+    required: true,
+  },
+
+  assignedRoute: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "Route",
+    required: true,
+  },
+
+  status: { type: String, enum: ["active", "inactive"], default: "active" },
+
+  createdAt: { type: Date, default: Date.now },
 });
 
 export default mongoose.model("Student", studentSchema);
