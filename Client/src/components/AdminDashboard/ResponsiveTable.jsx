@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { FaSave, FaSearch, FaPlus } from "react-icons/fa";
 import axios from "axios";
 
@@ -7,13 +7,52 @@ export default function ResponsiveTable({ data, type }) {
   const [search, setSearch] = useState("");
   const [showForm, setShowForm] = useState(false);
   const [newItem, setNewItem] = useState({});
+  const [dropdowns, setDropdowns] = useState({
+    drivers: [],
+    routes: [],
+    buses: [],
+  });
 
-  // Normalize type ("Students" -> "student", "Buses" -> "bus")
   const normalizedType = type.toLowerCase().endsWith("es")
     ? type.toLowerCase().slice(0, -2)
     : type.toLowerCase().replace(/s$/, "");
   const formattedType =
     normalizedType.charAt(0).toUpperCase() + normalizedType.slice(1);
+
+  // ✅ Get token once
+  const token = localStorage.getItem("token");
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        if (type === "Students") {
+          const res = await axios.get(
+            "http://localhost:5000/api/admin/dashboard",
+            {
+              headers: {
+                Authorization: `Bearer ${token}`,
+              },
+            }
+          );
+          setItems(res.data.students || []);
+        }
+        if (type === "Buses" || type === "Students") {
+          const dropRes = await axios.get(
+            "http://localhost:5000/api/admin/dropdown-data",
+            {
+              headers: {
+                Authorization: `Bearer ${token}`,
+              },
+            }
+          );
+          setDropdowns(dropRes.data);
+        }
+      } catch (err) {
+        console.error("Error fetching data:", err);
+      }
+    };
+    fetchData();
+  }, [type, token]);
 
   const handleChange = (id, key, value) => {
     setItems((prev) =>
@@ -65,8 +104,7 @@ export default function ResponsiveTable({ data, type }) {
       {/* Add Form Modal */}
       {showForm && (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex justify-center items-center z-50">
-          {/* Scrollable Modal */}
-          <div className="bg-white rounded-2xl shadow-2xl w-[90%] sm:w-[550px] max-h-[90vh]  overflow-y-auto p-6 relative border border-gray-100 scrollbar-thin scrollbar-thumb-yellow-400 scrollbar-track-gray-100">
+          <div className="bg-white rounded-2xl shadow-2xl w-[90%] sm:w-[550px] max-h-[90vh] overflow-y-auto p-6 relative border border-gray-100">
             <button
               onClick={() => setShowForm(false)}
               className="absolute top-3 right-4 text-gray-500 hover:text-gray-700 text-2xl"
@@ -83,16 +121,29 @@ export default function ResponsiveTable({ data, type }) {
               onSubmit={async (e) => {
                 e.preventDefault();
                 try {
-                  const res = await axios.post(
-                    `http://localhost:5000/api/${normalizedType}s/add`,
-                    newItem
-                  );
-                  setItems((prev) => [...prev, res.data]);
+                  if (normalizedType === "student") {
+                    const payload = { ...newItem };
+
+                    console.log("📦 Sending student payload:", payload);
+
+                    const res = await axios.post(
+                      "http://localhost:5000/api/admin/create-student",
+                      payload,
+                      {
+                        headers: {
+                          Authorization: `Bearer ${token}`,
+                        },
+                      }
+                    );
+
+                    setItems((prev) => [...prev, res.data.student]);
+                    alert("Student added successfully!");
+                  }
                   setShowForm(false);
                   setNewItem({});
                 } catch (err) {
                   console.error(err);
-                  alert(`Error adding new ${normalizedType}`);
+                  alert(`Error adding ${normalizedType}`);
                 }
               }}
             >
@@ -122,87 +173,70 @@ export default function ResponsiveTable({ data, type }) {
                     field="address"
                     setNewItem={setNewItem}
                   />
-                  <Input
-                    label="Assigned Bus ID"
-                    field="assignedBus"
-                    setNewItem={setNewItem}
-                  />
-                  <Input
-                    label="Assigned Driver ID"
-                    field="assignedDriver"
-                    setNewItem={setNewItem}
-                  />
-                  <Input
-                    label="Assigned Route ID"
-                    field="assignedRoute"
-                    setNewItem={setNewItem}
-                  />
-                </div>
-              )}
 
-              {/* DRIVER FORM */}
-              {normalizedType === "driver" && (
-                <div className="space-y-3">
-                  <Input label="Name" field="name" setNewItem={setNewItem} />
-                  <Input
-                    label="Driver ID"
-                    field="driverId"
-                    setNewItem={setNewItem}
-                  />
-                  <Input
-                    label="License Number"
-                    field="licenseNumber"
-                    setNewItem={setNewItem}
-                  />
-                  <Input
-                    label="Contact Number"
-                    field="contactNumber"
-                    setNewItem={setNewItem}
-                  />
-                  <Input label="Email" field="email" setNewItem={setNewItem} />
-                  <Input
-                    label="Address"
-                    field="address"
-                    setNewItem={setNewItem}
-                  />
-                </div>
-              )}
+                  <label className="block text-sm font-medium text-gray-600 mb-1">
+                    Assigned Bus
+                  </label>
+                  <select
+                    className="w-full border p-2 rounded-lg focus:ring-2 focus:ring-yellow-400 outline-none"
+                    onChange={(e) =>
+                      setNewItem((prev) => ({
+                        ...prev,
+                        assignedBus: e.target.value,
+                      }))
+                    }
+                    required
+                  >
+                    <option value="">Select Bus</option>
+                    {dropdowns.buses.map((bus) => (
+                      <option key={bus._id} value={bus._id}>
+                        {bus.busId} ({bus.busNumberPlate})
+                      </option>
+                    ))}
+                  </select>
 
-              {/* BUS FORM */}
-              {normalizedType === "bus" && (
-                <div className="space-y-3">
-                  <Input label="Bus ID" field="busId" setNewItem={setNewItem} />
-                  <Input
-                    label="Bus Number Plate"
-                    field="busNumberPlate"
-                    setNewItem={setNewItem}
-                  />
-                  <Input
-                    label="Capacity"
-                    type="number"
-                    field="capacity"
-                    setNewItem={setNewItem}
-                  />
-                  <Input
-                    label="Model Name"
-                    field="modelName"
-                    setNewItem={setNewItem}
-                  />
-                  <Input
-                    label="Assigned Driver ID"
-                    field="assignedDriver"
-                    setNewItem={setNewItem}
-                  />
-                  <Input
-                    label="Assigned Route ID"
-                    field="assignedRoute"
-                    setNewItem={setNewItem}
-                  />
-                  <Input
-                    label="Status"
-                    field="status"
-                    setNewItem={setNewItem}
-                  />
+                  <label className="block text-sm font-medium text-gray-600 mb-1 mt-2">
+                    Assigned Driver
+                  </label>
+                  <select
+                    className="w-full border p-2 rounded-lg focus:ring-2 focus:ring-yellow-400 outline-none"
+                    onChange={(e) =>
+                      setNewItem((prev) => ({
+                        ...prev,
+                        assignedDriver: e.target.value,
+                      }))
+                    }
+                    required
+                  >
+                    <option value="">Select Driver</option>
+                    {dropdowns.drivers.map((driver) => (
+                      <option key={driver._id} value={driver._id}>
+                        {driver.name}
+                      </option>
+                    ))}
+                  </select>
+
+                  <label className="block text-sm font-medium text-gray-600 mb-1 mt-2">
+                    Assigned Route
+                  </label>
+                  <select
+                    className="w-full border p-2 rounded-lg focus:ring-2 focus:ring-yellow-400 outline-none"
+                    onChange={(e) =>
+                      setNewItem((prev) => ({
+                        ...prev,
+                        assignedRoute: e.target.value,
+                      }))
+                    }
+                    required
+                  >
+                    <option value="">Select Route</option>
+                    {dropdowns.routes.map((route) => (
+                      <option key={route._id} value={route._id}>
+                        {route.routeName} ({route.startPoint.name} →{" "}
+                        {route.endPoint.name})
+                      </option>
+                    ))}
+                  </select>
                 </div>
               )}
 
@@ -234,16 +268,20 @@ export default function ResponsiveTable({ data, type }) {
             key={item._id ?? Math.random()}
             className="bg-white shadow-md rounded-xl p-4 flex flex-col h-full"
           >
-            {Object.keys(item).map(
-              (key) =>
+            {Object.entries(item).map(
+              ([key, val]) =>
                 key !== "_id" && (
-                  <div className="mb-3" key={`${item._id}-${key}`}>
+                  <div className="mb-3" key={key}>
                     <label className="block text-gray-700 text-sm mb-1">
                       {key.charAt(0).toUpperCase() + key.slice(1)}
                     </label>
                     <input
                       type="text"
-                      value={item[key]}
+                      value={
+                        typeof val === "object"
+                          ? JSON.stringify(val)
+                          : val || ""
+                      }
                       onChange={(e) =>
                         handleChange(item._id, key, e.target.value)
                       }
@@ -266,7 +304,7 @@ export default function ResponsiveTable({ data, type }) {
   );
 }
 
-/* --- Reusable Input --- */
+/* --- Reusable Input Component --- */
 function Input({ label, field, type = "text", setNewItem }) {
   return (
     <>
