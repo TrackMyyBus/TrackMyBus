@@ -20,7 +20,7 @@ router.post("/create-admin", createAdmin);
 router.post("/create-driver", createDriver);
 
 // Create new Student account
-router.post("/create-student", createStudent);
+router.post("/create-student", protect, createStudent);
 
 // // Create new Route
 // router.post("/create-route", createRoute);
