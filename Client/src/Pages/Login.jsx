@@ -12,22 +12,26 @@ export default function Login() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+
     try {
       const res = await axios.post(
         "http://localhost:5000/api/auth/login",
         form
       );
+
+      // Save token + user
       localStorage.setItem("token", res.data.token);
+      localStorage.setItem("user", JSON.stringify(res.data.user));
       console.log("✅ Token saved:", res.data.token);
 
-      localStorage.setItem("user", JSON.stringify(res.data.user));
-
-      // redirect based on role
-      if (res.data.user.role === "admin") navigate("/admin");
-      else if (res.data.user.role === "driver") navigate("/driver");
+      // Redirect based on role
+      const role = res.data.user.role;
+      if (role === "admin") navigate("/admin");
+      else if (role === "driver") navigate("/driver");
       else navigate("/student");
     } catch (err) {
-      alert(err.response.data.message);
+      console.error(err);
+      alert(err.response?.data?.message || "Login failed");
     }
   };
 
@@ -42,6 +46,7 @@ export default function Login() {
         <h2 className="text-2xl font-extrabold text-indigo-900 mb-6 text-center">
           Login
         </h2>
+
         <form className="space-y-4" onSubmit={handleSubmit}>
           <input
             type="text"
@@ -52,6 +57,7 @@ export default function Login() {
             className="w-full px-4 py-2 rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition"
             required
           />
+
           <input
             type="password"
             name="password"
@@ -61,6 +67,7 @@ export default function Login() {
             className="w-full px-4 py-2 rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition"
             required
           />
+
           <button
             type="submit"
             className="w-full py-2 rounded-lg bg-yellow-500 hover:bg-yellow-600 text-white font-medium transition"
@@ -68,6 +75,7 @@ export default function Login() {
             Login
           </button>
         </form>
+
         <div className="flex justify-between mt-4 text-sm text-slate-600">
           <Link
             to="/update-password"
@@ -75,6 +83,7 @@ export default function Login() {
           >
             Forgot Password?
           </Link>
+
           <Link to="/signup" className="text-yellow-500 hover:underline">
             Sign Up
           </Link>

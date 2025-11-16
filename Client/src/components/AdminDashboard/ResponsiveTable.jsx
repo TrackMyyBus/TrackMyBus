@@ -116,34 +116,43 @@ export default function ResponsiveTable({ data, type }) {
               Add New {formattedType}
             </h2>
             <div className="h-1 w-16 bg-yellow-500 rounded mx-auto mb-6"></div>
-
             <form
               onSubmit={async (e) => {
                 e.preventDefault();
+
+                if (normalizedType !== "student") return;
+
+                const token = localStorage.getItem("token");
+
                 try {
-                  if (normalizedType === "student") {
-                    const payload = { ...newItem };
+                  const res = await axios.post(
+                    "http://localhost:5000/api/admin/create-student",
+                    {
+                      name: newItem.name,
+                      enrollmentId: newItem.enrollmentId,
+                      enrollmentYear: newItem.enrollmentYear,
+                      email: newItem.email,
+                      contactNumber: newItem.contactNumber,
+                      address: newItem.address,
+                      assignedBus: newItem.assignedBus, // Correct
+                      assignedDriver: newItem.assignedDriver, // Correct
+                      assignedRoute: newItem.assignedRoute, // Correct
+                    },
+                    {
+                      headers: {
+                        Authorization: `Bearer ${token}`,
+                      },
+                    }
+                  );
 
-                    console.log("📦 Sending student payload:", payload);
+                  alert("Student added successfully!");
 
-                    const res = await axios.post(
-                      "http://localhost:5000/api/admin/create-student",
-                      payload,
-                      {
-                        headers: {
-                          Authorization: `Bearer ${token}`,
-                        },
-                      }
-                    );
-
-                    setItems((prev) => [...prev, res.data.student]);
-                    alert("Student added successfully!");
-                  }
+                  setItems((prev) => [...prev, res.data.student]);
                   setShowForm(false);
                   setNewItem({});
                 } catch (err) {
-                  console.error(err);
-                  alert(`Error adding ${normalizedType}`);
+                  console.log(err);
+                  alert(err.response?.data?.message || "Failed to add student");
                 }
               }}
             >
@@ -191,27 +200,6 @@ export default function ResponsiveTable({ data, type }) {
                     {dropdowns.buses.map((bus) => (
                       <option key={bus._id} value={bus._id}>
                         {bus.busId} ({bus.busNumberPlate})
-                      </option>
-                    ))}
-                  </select>
-
-                  <label className="block text-sm font-medium text-gray-600 mb-1 mt-2">
-                    Assigned Driver
-                  </label>
-                  <select
-                    className="w-full border p-2 rounded-lg focus:ring-2 focus:ring-yellow-400 outline-none"
-                    onChange={(e) =>
-                      setNewItem((prev) => ({
-                        ...prev,
-                        assignedDriver: e.target.value,
-                      }))
-                    }
-                    required
-                  >
-                    <option value="">Select Driver</option>
-                    {dropdowns.drivers.map((driver) => (
-                      <option key={driver._id} value={driver._id}>
-                        {driver.name}
                       </option>
                     ))}
                   </select>

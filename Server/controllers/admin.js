@@ -11,30 +11,59 @@ import bcrypt from "bcryptjs";
 /**
  * Create a new admin (institute)
  */
+
 export const createAdmin = async (req, res) => {
   try {
-    const { name, email, password, contactNumber, department } = req.body;
+    const {
+      instituteName,
+      instituteCode,
+      email,
+      password,
+      contactNumber,
+      address,
+      city,
+      state,
+    } = req.body;
 
+    // Check if admin/user exists
     const existingUser = await User.findOne({ email });
-    if (existingUser)
-      return res.status(400).json({ message: "Admin already exists" });
+    if (existingUser) {
+      return res.status(400).json({ message: "Admin user already exists" });
+    }
 
+    // hash password
     const hashedPassword = await bcrypt.hash(password, 10);
 
+    // Create user with role admin
     const user = await User.create({
-      name,
+      name: instituteName,
       email,
       password: hashedPassword,
       role: "admin",
     });
 
+    // Create admin document linked with user._id
     const admin = await Admin.create({
       user: user._id,
+      instituteName,
+      instituteCode,
+      email,
+      password: hashedPassword,
       contactNumber,
-      department,
+      address,
+      city,
+      state,
+      students: [],
+      drivers: [],
+      buses: [],
+      routes: [],
     });
 
-    res.status(201).json({ message: "Admin created successfully", admin });
+    return res.status(201).json({
+      message: "Admin created successfully",
+      admin,
+      user,
+    });
   } catch (error) {
     console.error("Error creating admin:", error);
     res.status(500).json({ message: "Server error" });
@@ -79,11 +108,11 @@ export const createDriver = async (req, res) => {
  */
 export const createStudent = async (req, res) => {
   try {
-    if (!req.admin) {
-      return res
-        .status(400)
-        .json({ message: "Admin context missing, please login again" });
+    if (!req.user || req.user.role !== "admin") {
+      return res.status(403).json({ message: "Only admin can create student" });
     }
+
+    const adminAccount = req.admin; // from protect middleware
 
     const {
       name,
@@ -102,6 +131,7 @@ export const createStudent = async (req, res) => {
       return res.status(400).json({ message: "Student already exists" });
 
     const hashedPassword = await bcrypt.hash("password123", 10);
+
     const user = await User.create({
       name,
       email,
@@ -111,7 +141,7 @@ export const createStudent = async (req, res) => {
 
     const student = await Student.create({
       user: user._id,
-      institute: req.admin._id, // 👈 auto-linked here
+      institute: adminAccount._id,
       name,
       enrollmentId,
       enrollmentYear,

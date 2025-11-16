@@ -1,12 +1,11 @@
 import React, { useState, useEffect } from "react";
 import Sidebar from "@/components/AdminDashboard/Sidebar";
 import DashboardOverview from "@/components/AdminDashboard/DashboardOverview";
-import ResponsiveTable from "@/components/AdminDashboard/ResponsiveTable"; // Updated
+import ResponsiveTable from "@/components/AdminDashboard/ResponsiveTable";
 import RoutesSection from "@/components/AdminDashboard/RoutesSection";
 import NotificationsSection from "@/components/AdminDashboard/NotificationsSection";
 import ChatSection from "@/components/AdminDashboard/ChatSection";
 import BusLocationPage from "@/components/AdminDashboard/BusLocationPage";
-import { students, drivers, buses } from "@/lib/mock-data";
 
 export default function AdminDashboard() {
   const [activeTab, setActiveTab] = useState(
@@ -32,7 +31,6 @@ export default function AdminDashboard() {
 
   return (
     <div className="flex min-h-screen bg-gray-100">
-      {/* Sidebar */}
       <Sidebar
         sidebarOpen={sidebarOpen}
         setSidebarOpen={setSidebarOpen}
@@ -40,20 +38,23 @@ export default function AdminDashboard() {
         setActiveTab={setActiveTab}
       />
 
-      {/* Main content */}
       <main
         className={`flex-1 p-2 sm:p-4 md:p-6 transition-all duration-300 flex flex-col min-h-screen ${
           sidebarOpen ? "md:ml-0" : "md:ml-16"
         }`}
       >
         {activeTab === "dashboard" && <DashboardOverview />}
+
         {activeTab === "students" && (
-          <ResponsiveTable data={students} type="Students" />
+          <ResponsiveTable data={[]} type="Students" />
         )}
+
         {activeTab === "drivers" && (
-          <ResponsiveTable data={drivers} type="Drivers" />
+          <ResponsiveTable data={[]} type="Drivers" />
         )}
-        {activeTab === "buses" && <ResponsiveTable data={buses} type="Buses" />}
+
+        {activeTab === "buses" && <ResponsiveTable data={[]} type="Buses" />}
+
         {activeTab === "routes" && <RoutesSection />}
         {activeTab === "notifications" && <NotificationsSection />}
         {activeTab === "chat" && <ChatSection />}
