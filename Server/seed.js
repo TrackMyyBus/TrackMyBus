@@ -1,7 +1,6 @@
 import mongoose from "mongoose";
 import dotenv from "dotenv";
 
-// Import all models
 import Admin from "./models/Admin.js";
 import Driver from "./models/Driver.js";
 import Student from "./models/Student.js";
@@ -12,21 +11,20 @@ import User from "./models/User.js";
 
 dotenv.config();
 
-// 🧩 Connect to MongoDB
+// Connect to DB
 mongoose
     .connect(process.env.MONGO_URI)
     .then(() => console.log("✅ MongoDB Connected"))
-    .catch((err) => console.error("❌ Connection Error:", err));
+    .catch((err) => console.error("❌ DB Error:", err));
 
-// ✅ Helper to create users (NO MANUAL HASHING)
+// Helper: create User if not exists
 const createUser = async (name, email, password, role) => {
-    const existing = await User.findOne({ email });
-    if (existing) return existing; // Skip if exists
+    const exists = await User.findOne({ email });
+    if (exists) return exists;
     return await User.create({ name, email, password, role });
 };
 
-// ✅ Main Seeder Function
-const seedData = async () => {
+const seed = async () => {
     try {
         console.log("🧹 Clearing old data...");
         await Promise.all([
@@ -39,227 +37,164 @@ const seedData = async () => {
             User.deleteMany({}),
         ]);
 
-        console.log("✅ Old data cleared!");
+        console.log("⏳ Seeding Started...");
 
-        // 1️⃣ Create Admins
-        const admin1 = await Admin.create({
-            instituteName: "ABC Institute of Technology",
-            instituteCode: "INST001",
-            email: "admin1@abc.edu",
-            password: "Admin@123", // plain — will be hashed by schema
-            contactNumber: "9876543210",
-            address: "Sector 21, Delhi",
-            city: "New Delhi",
-            state: "Delhi",
-            notifications: [
-                {
-                    title: "System Ready",
-                    message: "Admin account created successfully",
-                },
-            ],
-        });
-
-        const admin2 = await Admin.create({
-            instituteName: "XYZ College of Engineering",
-            instituteCode: "INST002",
-            email: "admin2@xyz.edu",
-            password: "Admin@123",
-            contactNumber: "9988776655",
-            address: "Sector 12, Noida",
-            city: "Noida",
-            state: "UP",
-            notifications: [
-                { title: "Setup Complete", message: "Admin created successfully" },
-            ],
-        });
-
-        await createUser(admin1.instituteName, admin1.email, "Admin@123", "admin");
-        await createUser(admin2.instituteName, admin2.email, "Admin@123", "admin");
-
-        console.log("✅ Admins added!");
-
-        // 2️⃣ Create Drivers
-        const drivers = await Driver.insertMany([
+        // ------------------- ADMINS -------------------
+        const adminsData = [
             {
-                institute: admin1._id,
-                driverId: "DRV001",
-                name: "Ravi Kumar",
-                email: "ravi.kumar@abc.edu",
-                password: "Driver@123",
-                contactNumber: "9812345678",
-                licenseNumber: "DL12345",
-                location: { latitude: 28.7041, longitude: 77.1025 },
-                status: "active",
+                _id: new mongoose.Types.ObjectId("691b322c88d435b0a2fa6f10"),
+                instituteName: "Medicaps University",
+                instituteCode: "MU001",
+                email: "admin@medicaps.edu",
+                password: "Admin@123",
+                contactNumber: "9998887771",
+                address: "AB Road, Indore",
+                city: "Indore",
+                state: "MP",
+                notifications: [{ title: "System Initiated", message: "Admin created successfully" }],
             },
             {
-                institute: admin2._id,
-                driverId: "DRV002",
-                name: "Amit Sharma",
-                email: "amit.sharma@xyz.edu",
-                password: "Driver@123",
-                contactNumber: "9823456789",
-                licenseNumber: "DL67890",
-                location: { latitude: 28.5355, longitude: 77.391 },
-                status: "active",
+                _id: new mongoose.Types.ObjectId("691b338dc42bfb7663b54669"),
+                instituteName: "Acropolish Institute",
+                instituteCode: "AC-101",
+                email: "admin@acro.edu",
+                password: "$2b$10$c1wUegxM6dxGVuGYQuS5wOjpYHDdPbVKA0iLIJmECtXq/LDJ9m.2q", // pre-hashed
+                contactNumber: "07311111",
+                address: "ByPass",
+                city: "Indore",
+                state: "Madhya Pradesh",
+                notifications: [],
             },
-        ]);
-
-        await createUser("Ravi Kumar", "ravi.kumar@abc.edu", "Driver@123", "driver");
-        await createUser(
-            "Amit Sharma",
-            "amit.sharma@xyz.edu",
-            "Driver@123",
-            "driver"
-        );
-
-        console.log("✅ Drivers added!");
-
-        // 3️⃣ Create Routes
-        const routes = await Route.insertMany([
             {
-                institute: admin1._id,
-                routeName: "Delhi Route 1",
-                startPoint: {
-                    name: "Rajiv Chowk",
-                    latitude: 28.6328,
-                    longitude: 77.2197,
-                },
-                endPoint: {
-                    name: "Dwarka Sector 21",
-                    latitude: 28.5562,
-                    longitude: 77.0674,
-                },
+                _id: new mongoose.Types.ObjectId("691b4bd8812c070e0a5ee836"),
+                instituteName: "Prestige Institute",
+                instituteCode: "PI-01",
+                email: "admin@pi.edu",
+                password: "$2b$10$1R4dU4hvgsZxdAXYkVubiuwD3NYfLJ2mtLyNg81cmN35v6WGDMhr2", // pre-hashed
+                contactNumber: "07312222",
+                address: "SatyaSai",
+                city: "Indore",
+                state: "Madhya Pradesh",
+                notifications: [],
+            },
+        ];
+
+        const admins = [];
+        for (const a of adminsData) {
+            const admin = await Admin.create(a);
+            await createUser(admin.instituteName, admin.email, a.password, "admin");
+            admins.push(admin);
+        }
+        console.log("✅ Admins created");
+
+        // ------------------- STUDENTS / DRIVERS / BUSES / ROUTES -------------------
+        // Students count: 3,4,1
+        // Buses count: 3,4,1
+        const studentsCount = [3, 4, 1];
+        const busesCount = [3, 4, 1];
+
+        for (let i = 0; i < admins.length; i++) {
+            const admin = admins[i];
+
+            // Routes (1 per admin)
+            const route = await Route.create({
+                institute: admin._id,
+                routeName: `${admin.instituteName} Main Route`,
+                startPoint: { name: "Start", latitude: 22.7 + i * 0.01, longitude: 75.8 + i * 0.01 },
+                endPoint: { name: "End", latitude: 22.8 + i * 0.01, longitude: 75.9 + i * 0.01 },
                 stops: [
-                    { name: "CP", latitude: 28.6328, longitude: 77.2197, stopOrder: 1 },
-                    { name: "Janakpuri", latitude: 28.621, longitude: 77.0905, stopOrder: 2 },
+                    { name: "Stop1", latitude: 22.71 + i * 0.01, longitude: 75.81 + i * 0.01, stopOrder: 1 },
+                    { name: "Stop2", latitude: 22.72 + i * 0.01, longitude: 75.82 + i * 0.01, stopOrder: 2 },
                 ],
-                totalDistance: 25,
-                estimatedDuration: "45 minutes",
-            },
-            {
-                institute: admin2._id,
-                routeName: "Noida Route 1",
-                startPoint: {
-                    name: "Sector 15 Metro",
-                    latitude: 28.585,
-                    longitude: 77.315,
-                },
-                endPoint: { name: "Sector 62", latitude: 28.628, longitude: 77.368 },
-                stops: [
-                    { name: "Sector 18", latitude: 28.57, longitude: 77.325, stopOrder: 1 },
-                    { name: "Sector 37", latitude: 28.58, longitude: 77.34, stopOrder: 2 },
-                ],
-                totalDistance: 18,
-                estimatedDuration: "35 minutes",
-            },
-        ]);
+                totalDistance: 20 + i * 5,
+                estimatedDuration: `${30 + i * 10} minutes`,
+            });
 
-        console.log("✅ Routes added!");
+            admin.routes.push(route._id);
 
-        // 4️⃣ Create Buses
-        const buses = await Bus.insertMany([
-            {
-                institute: admin1._id,
-                busId: "BUS001",
-                busNumberPlate: "DL01AB1234",
-                assignedDriver: drivers[0]._id,
-                assignedRoute: routes[0]._id,
-                currentLocation: {
-                    latitude: 28.7041,
-                    longitude: 77.1025,
-                    speed: 40,
-                    lastUpdated: new Date(),
-                },
-                status: "active",
-            },
-            {
-                institute: admin2._id,
-                busId: "BUS002",
-                busNumberPlate: "UP16XY5678",
-                assignedDriver: drivers[1]._id,
-                assignedRoute: routes[1]._id,
-                currentLocation: {
-                    latitude: 28.5355,
-                    longitude: 77.391,
-                    speed: 35,
-                    lastUpdated: new Date(),
-                },
-                status: "active",
-            },
-        ]);
+            // Buses & Drivers
+            const buses = [];
+            const drivers = [];
+            for (let j = 0; j < busesCount[i]; j++) {
+                const bus = await Bus.create({
+                    institute: admin._id,
+                    busId: `${admin.instituteCode}-BUS-${j + 1}`,
+                    busNumberPlate: `${admin.instituteCode}-PLATE-${j + 1}`,
+                    status: "active",
+                    assignedRoute: route._id,
+                    currentLocation: {
+                        latitude: 22.7 + j * 0.01,
+                        longitude: 75.8 + j * 0.01,
+                        speed: 30,
+                        lastUpdated: new Date(),
+                    },
+                });
+                buses.push(bus);
 
-        console.log("✅ Buses added!");
+                const driver = await Driver.create({
+                    institute: admin._id,
+                    name: `Driver ${j + 1} - ${admin.instituteName}`,
+                    driverId: `${admin.instituteCode}-DRV-${j + 1}`,
+                    email: `driver${j + 1}.${admin.instituteCode.toLowerCase()}@edu.com`,
+                    contactNumber: `99999${i}${j}000`,
+                    assignedBus: bus._id,
+                    assignedRoute: route._id,
+                });
+                drivers.push(driver);
+                bus.assignedDriver = driver._id;
+                await bus.save();
 
-        // 5️⃣ Create Students
-        const students = await Student.insertMany([
-            {
-                institute: admin1._id,
-                name: "Neha Gupta",
-                enrollmentId: "STU001",
-                enrollmentYear: 2022,
-                email: "neha@abc.edu",
-                password: "Student@123",
-                contactNumber: "9991112233",
-                address: "Sector 10, Delhi",
-                busNumber: "BUS001",
-                busPlateNumber: "DL01AB1234",
-                assignedDriver: drivers[0]._id,
-                assignedRoute: routes[0]._id,
-                status: "active",
-            },
-            {
-                institute: admin2._id,
-                name: "Rahul Verma",
-                enrollmentId: "STU002",
-                enrollmentYear: 2023,
-                email: "rahul@xyz.edu",
-                password: "Student@123",
-                contactNumber: "9992223344",
-                address: "Sector 62, Noida",
-                busNumber: "BUS002",
-                busPlateNumber: "UP16XY5678",
-                assignedDriver: drivers[1]._id,
-                assignedRoute: routes[1]._id,
-                status: "active",
-            },
-        ]);
+                await createUser(driver.name, driver.email, "Driver@123", "driver");
 
-        await createUser("Neha Gupta", "neha@abc.edu", "Student@123", "student");
-        await createUser("Rahul Verma", "rahul@xyz.edu", "Student@123", "student");
+                // Bus Location
+                await BusLocation.create({
+                    bus: bus._id,
+                    driver: driver._id,
+                    latitude: bus.currentLocation.latitude,
+                    longitude: bus.currentLocation.longitude,
+                    speed: 30,
+                    status: "moving",
+                    address: "Near Route Start",
+                });
+            }
 
-        console.log("✅ Students added!");
+            // Students
+            const students = [];
+            for (let k = 0; k < studentsCount[i]; k++) {
+                const assignedBus = buses[k % buses.length];
+                const assignedDriver = drivers[k % drivers.length];
 
-        // 6️⃣ Create Bus Locations
-        await BusLocation.insertMany([
-            {
-                bus: buses[0]._id,
-                driver: drivers[0]._id,
-                latitude: 28.7041,
-                longitude: 77.1025,
-                speed: 45,
-                accuracy: 5,
-                status: "moving",
-                address: "Near CP, Delhi",
-            },
-            {
-                bus: buses[1]._id,
-                driver: drivers[1]._id,
-                latitude: 28.5355,
-                longitude: 77.391,
-                speed: 38,
-                accuracy: 5,
-                status: "moving",
-                address: "Sector 18, Noida",
-            },
-        ]);
+                const student = await Student.create({
+                    institute: admin._id,
+                    name: `Student ${k + 1} - ${admin.instituteName}`,
+                    enrollmentId: `${admin.instituteCode}-STD-${k + 1}`,
+                    enrollmentYear: 2025,
+                    email: `student${k + 1}.${admin.instituteCode.toLowerCase()}@edu.com`,
+                    contactNumber: `88888${i}${k}00`,
+                    address: `Address ${k + 1}`,
+                    busNumber: assignedBus.busId,
+                    busPlateNumber: assignedBus.busNumberPlate,
+                    assignedBus: assignedBus._id,
+                    assignedDriver: assignedDriver._id,
+                    assignedRoute: route._id,
+                });
+                students.push(student);
+                await createUser(student.name, student.email, "Student@123", "student");
+            }
 
-        console.log("✅ Bus Locations added!");
-        console.log("🎉 All data seeded successfully!");
+            // Update Admin references
+            admin.students = students.map((s) => s._id);
+            admin.drivers = drivers.map((d) => d._id);
+            admin.buses = buses.map((b) => b._id);
+            await admin.save();
+        }
+
+        console.log("🎉 Seeding completed successfully!");
         process.exit(0);
     } catch (err) {
-        console.error("❌ Seeding Error:", err);
+        console.error("❌ Seeder Error:", err);
         process.exit(1);
     }
 };
 
-seedData();
+seed();

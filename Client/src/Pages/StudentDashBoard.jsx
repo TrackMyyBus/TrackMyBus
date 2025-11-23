@@ -30,6 +30,7 @@ L.Icon.Default.mergeOptions({
     "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png",
 });
 
+// Connect socket
 const socket = io("http://localhost:5000");
 
 export default function StudentDashboard() {
@@ -44,19 +45,32 @@ export default function StudentDashboard() {
 
   const navigate = useNavigate();
 
+  const studentId = "ST201"; // replace with real student ID from token later
+
   const handleLogout = () => {
     localStorage.removeItem("token");
     localStorage.removeItem("activeTab");
     navigate("/");
   };
 
+  // SOCKET LISTENERS
   useEffect(() => {
-    // listen for live updates from driver
-    socket.on("busLocationUpdate", (data) => {
-      setBusLocation(data);
+    // Join student room (for receiving driver updates)
+    socket.emit("join-student", studentId);
+
+    // Receive live bus location from backend (ROOM based)
+    socket.on("location-update", (data) => {
+      console.log("📍 Bus Update Received:", data);
+
+      setBusLocation({
+        lat: data.latitude,
+        lng: data.longitude,
+      });
     });
 
-    return () => socket.off("busLocationUpdate");
+    return () => {
+      socket.off("location-update");
+    };
   }, []);
 
   return (
@@ -136,7 +150,10 @@ export default function StudentDashboard() {
               </span>
             </p>
             <Button
-              onClick={() => setIsTracking(!isTracking)}
+              onClick={() => {
+                setIsTracking(!isTracking);
+                socket.emit("request-bus-location", { studentId });
+              }}
               className={`w-full ${
                 isTracking
                   ? "bg-red-500 hover:bg-red-600"
@@ -179,7 +196,7 @@ export default function StudentDashboard() {
         <CardContent>
           {busLocation ? (
             <MapContainer
-              center={[busLocation.lat, busLocation.lng]}
+              center={[busLocation.lat || 22.7196, busLocation.lng || 75.8577]}
               zoom={14}
               style={{ height: "350px", width: "100%", borderRadius: "12px" }}>
               <TileLayer
@@ -211,7 +228,7 @@ export default function StudentDashboard() {
             ? "Tracking live bus location..."
             : "Click 'Track My Bus' to start"}
         </div>
-        <span className="text-slate-600 text-sm">Student ID: ST201</span>
+        <span className="text-slate-600 text-sm">Student ID: {studentId}</span>
       </motion.div>
     </div>
   );

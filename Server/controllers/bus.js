@@ -1,103 +1,79 @@
 import Bus from "../models/Bus.js";
-import Driver from "../models/Driver.js";
-import Route from "../models/Route.js";
 
-// ✅ Add a new bus
-export const addBus = async (req, res) => {
+// Create a new bus
+export const createBus = async (req, res) => {
     try {
-        const { busNumber, busPlateNumber, capacity, assignedDriver, route } = req.body;
+        const busData = {
+            ...req.body,
+            institute: req.user._id, // Automatically assign logged-in admin
+        };
 
-        // Check if bus already exists
-        const existingBus = await Bus.findOne({ busNumber });
-        if (existingBus)
-            return res.status(400).json({ message: "Bus with this number already exists" });
+        const bus = await Bus.create(busData);
+        res.status(201).json(bus);
+    } catch (err) {
+        console.error("❌ Error creating bus:", err);
+        res.status(500).json({ message: "Server Error", error: err.message });
+    }
+};
 
-        // Optional: validate driver or route existence
-        if (assignedDriver) {
-            const driverExists = await Driver.findById(assignedDriver);
-            if (!driverExists)
-                return res.status(400).json({ message: "Assigned driver not found" });
-        }
-
-        if (route) {
-            const routeExists = await Route.findById(route);
-            if (!routeExists)
-                return res.status(400).json({ message: "Assigned route not found" });
-        }
-
-        const newBus = await Bus.create({
-            busNumber,
-            busPlateNumber,
-            capacity,
-            assignedDriver,
-            route,
+// Update a bus
+export const updateBus = async (req, res) => {
+    try {
+        const updatedBus = await Bus.findByIdAndUpdate(req.params.id, req.body, {
+            new: true,
+            runValidators: true,
         });
 
-        res.status(201).json({ message: "Bus added successfully", bus: newBus });
-    } catch (error) {
-        console.error("Error adding bus:", error);
-        res.status(500).json({ message: "Server error" });
+        if (!updatedBus) {
+            return res.status(404).json({ message: "Bus not found" });
+        }
+
+        res.json(updatedBus);
+    } catch (err) {
+        console.error("❌ Error updating bus:", err);
+        res.status(500).json({ message: "Server Error", error: err.message });
     }
 };
 
-// ✅ Get all buses
-export const getAllBuses = async (req, res) => {
+// Get all buses for this admin
+export const getBuses = async (req, res) => {
     try {
-        const buses = await Bus.find()
-            .populate("assignedDriver", "name contactNumber licenseNumber")
-            .populate("route", "routeName startPoint endPoint totalStops");
-        res.status(200).json(buses);
-    } catch (error) {
-        console.error("Error fetching buses:", error);
-        res.status(500).json({ message: "Server error" });
+        const buses = await Bus.find({ institute: req.user._id })
+            .populate("assignedDriver")
+            .populate("assignedRoute");
+
+        res.json(buses);
+    } catch (err) {
+        console.error("❌ Error fetching buses:", err);
+        res.status(500).json({ message: "Server Error", error: err.message });
     }
 };
 
-// ✅ Get single bus by ID
-export const getBusById = async (req, res) => {
+// Get single bus
+export const getBus = async (req, res) => {
     try {
         const bus = await Bus.findById(req.params.id)
-            .populate("assignedDriver", "name contactNumber licenseNumber")
-            .populate("route", "routeName startPoint endPoint totalStops");
+            .populate("assignedDriver")
+            .populate("assignedRoute");
 
         if (!bus) return res.status(404).json({ message: "Bus not found" });
 
-        res.status(200).json(bus);
-    } catch (error) {
-        console.error("Error fetching bus:", error);
-        res.status(500).json({ message: "Server error" });
+        res.json(bus);
+    } catch (err) {
+        console.error("❌ Error fetching bus:", err);
+        res.status(500).json({ message: "Server Error", error: err.message });
     }
 };
 
-// ✅ Update bus details
-export const updateBus = async (req, res) => {
-    try {
-        const { busNumber, busPlateNumber, capacity, assignedDriver, route, isActive } = req.body;
-
-        const updatedBus = await Bus.findByIdAndUpdate(
-            req.params.id,
-            { busNumber, busPlateNumber, capacity, assignedDriver, route, isActive },
-            { new: true }
-        );
-
-        if (!updatedBus) return res.status(404).json({ message: "Bus not found" });
-
-        res.status(200).json({ message: "Bus updated successfully", bus: updatedBus });
-    } catch (error) {
-        console.error("Error updating bus:", error);
-        res.status(500).json({ message: "Server error" });
-    }
-};
-
-// ✅ Delete a bus
+// Delete bus
 export const deleteBus = async (req, res) => {
     try {
         const bus = await Bus.findByIdAndDelete(req.params.id);
         if (!bus) return res.status(404).json({ message: "Bus not found" });
 
-        res.status(200).json({ message: "Bus deleted successfully" });
-    } catch (error) {
-        console.error("Error deleting bus:", error);
-        res.status(500).json({ message: "Server error" });
+        res.json({ message: "Bus deleted successfully" });
+    } catch (err) {
+        console.error("❌ Error deleting bus:", err);
+        res.status(500).json({ message: "Server Error", error: err.message });
     }
 };

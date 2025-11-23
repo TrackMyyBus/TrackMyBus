@@ -1,6 +1,5 @@
 import React from "react";
 import { motion } from "framer-motion";
-import { FaUsers, FaUserCog, FaBus, FaRoute } from "react-icons/fa";
 import {
   LineChart,
   Line,
@@ -10,40 +9,41 @@ import {
   Tooltip,
   ResponsiveContainer,
 } from "recharts";
+import { FaUsers, FaUserCog, FaBus, FaRoute } from "react-icons/fa";
 
-const data = [
-  { month: "Jan", students: 10, buses: 2 },
-  { month: "Feb", students: 15, buses: 3 },
-  { month: "Mar", students: 18, buses: 4 },
-  { month: "Apr", students: 20, buses: 5 },
-];
+export default function DashboardOverview({ stats, chart }) {
+  // Provide defaults if props are missing
+  const safeStats = stats || {
+    totalStudents: 0,
+    totalDrivers: 0,
+    totalBuses: 0,
+    activeRoutes: 0,
+  };
+  const safeChart = chart || [
+    { month: "Jan", students: 0, buses: 0 },
+    { month: "Feb", students: 0, buses: 0 },
+    { month: "Mar", students: 0, buses: 0 },
+    { month: "Apr", students: 0, buses: 0 },
+  ];
 
-export default function DashboardOverview() {
-  const stats = [
-    {
-      label: "Total Students",
-      value: 20,
-      icon: <FaUsers />,
-      color: "text-yellow-500",
-    },
-    {
-      label: "Total Drivers",
-      value: 5,
-      icon: <FaUserCog />,
-      color: "text-blue-500",
-    },
-    {
-      label: "Total Buses",
-      value: 5,
-      icon: <FaBus />,
-      color: "text-green-500",
-    },
-    {
-      label: "Active Routes",
-      value: 2,
-      icon: <FaRoute />,
-      color: "text-purple-500",
-    },
+  const icons = [<FaUsers />, <FaUserCog />, <FaBus />, <FaRoute />];
+  const colors = [
+    "text-yellow-500",
+    "text-blue-500",
+    "text-green-500",
+    "text-purple-500",
+  ];
+  const labels = [
+    "Total Students",
+    "Total Drivers",
+    "Total Buses",
+    "Active Routes",
+  ];
+  const values = [
+    safeStats.totalStudents,
+    safeStats.totalDrivers,
+    safeStats.totalBuses,
+    safeStats.activeRoutes,
   ];
 
   return (
@@ -53,17 +53,18 @@ export default function DashboardOverview() {
           Admin Dashboard
         </h1>
       </div>
+
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
-        {stats.map((stat, i) => (
+        {labels.map((label, i) => (
           <motion.div
             key={i}
             whileHover={{ scale: 1.03 }}
             className="bg-white shadow rounded-xl p-6 text-center border border-gray-100">
-            <div className={`flex justify-center text-3xl mb-3 ${stat.color}`}>
-              {stat.icon}
+            <div className={`flex justify-center text-3xl mb-3 ${colors[i]}`}>
+              {icons[i]}
             </div>
-            <div className="text-gray-600 font-medium">{stat.label}</div>
-            <div className="text-3xl font-bold">{stat.value}</div>
+            <div className="text-gray-600 font-medium">{label}</div>
+            <div className="text-3xl font-bold">{values[i]}</div>
           </motion.div>
         ))}
       </div>
@@ -73,20 +74,14 @@ export default function DashboardOverview() {
           Monthly Activity Overview
         </h2>
         <ResponsiveContainer width="100%" height={300}>
-          <LineChart data={data}>
+          <LineChart data={safeChart}>
             <CartesianGrid strokeDasharray="3 3" />
-            <XAxis dataKey="month" />
+            <XAxis dataKey="category" />
             <YAxis />
             <Tooltip />
             <Line
               type="monotone"
-              dataKey="students"
-              stroke="#facc15"
-              strokeWidth={2}
-            />
-            <Line
-              type="monotone"
-              dataKey="buses"
+              dataKey="count"
               stroke="#3b82f6"
               strokeWidth={2}
             />

@@ -1,8 +1,9 @@
 import express from "express";
-import { updateBusLocation, getBusLocation } from "../controllers/location.js";
+import { startSharingLocation, updateBusLocation, getBusLocation } from "../controllers/location.js";
 
 const router = express.Router();
 
+router.post("/start", startSharingLocation);
 router.post("/update", updateBusLocation);     // called by driver app
 router.get("/:busId", getBusLocation);         // called by student/admin
 

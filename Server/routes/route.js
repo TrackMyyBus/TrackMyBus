@@ -7,25 +7,21 @@ import {
     deleteRoute,
     assignBusToRoute,
 } from "../controllers/route.js";
+import { protect } from "../middleware/auth.js";
 
 const router = express.Router();
 
-// Create new route
-router.post("/create", createRoute);
+// ROUTE CRUD
+router.post("/", protect, createRoute);
 
-// Get all routes
-router.get("/", getAllRoutes);
+// GET ALL ROUTES for current admin/institute
+router.get("/", protect, getAllRoutes);
 
-// Get specific route (with assigned buses and live bus locations)
-router.get("/:routeId", getRouteById);
+router.get("/:routeId", protect, getRouteById);
+router.put("/:routeId", protect, updateRoute);
+router.delete("/:routeId", protect, deleteRoute);
 
-// Update route (name, stops, etc.)
-router.put("/update/:routeId", updateRoute);
-
-// Delete route
-router.delete("/delete/:routeId", deleteRoute);
-
-// Assign a bus to a route
-router.post("/assign-bus", assignBusToRoute);
+// ASSIGN BUS
+router.post("/assign", protect, assignBusToRoute);
 
 export default router;

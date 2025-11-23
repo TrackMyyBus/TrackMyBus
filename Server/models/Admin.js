@@ -9,6 +9,7 @@ const adminSchema = new mongoose.Schema({
     address: { type: String },
     city: { type: String },
     state: { type: String },
+    isAdmin: { type: Boolean, default: true },
 
     // Relationships (references)
     students: [{ type: mongoose.Schema.Types.ObjectId, ref: "Student" }],

@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useContext, useEffect, useState } from "react";
 import {
   FaBars,
   FaTimes,
@@ -13,14 +13,25 @@ import {
   FaMapMarkerAlt,
 } from "react-icons/fa";
 import { useNavigate } from "react-router-dom";
+import { AuthContext } from "../../contexts/AuthContext";
 
-export default function Sidebar({
-  sidebarOpen,
-  setSidebarOpen,
-  activeTab,
-  setActiveTab,
-}) {
+export default function Sidebar({ activeTab, setActiveTab }) {
   const navigate = useNavigate();
+  const { logoutUser } = useContext(AuthContext);
+
+  // Make sidebar responsive & persistent
+  const [sidebarOpen, setSidebarOpen] = useState(
+    typeof window !== "undefined"
+      ? JSON.parse(localStorage.getItem("sidebarOpen")) ?? true
+      : true
+  );
+
+  // Save sidebar state in localStorage
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      localStorage.setItem("sidebarOpen", JSON.stringify(sidebarOpen));
+    }
+  }, [sidebarOpen]);
 
   const menuItems = [
     { key: "dashboard", label: "Dashboard", icon: <FaUserCog /> },
@@ -34,24 +45,26 @@ export default function Sidebar({
   ];
 
   const handleLogout = () => {
-    localStorage.removeItem("token");
-    localStorage.removeItem("activeTab");
+    logoutUser(); // clears user & token
+    setActiveTab("dashboard"); // optional: reset active tab
     navigate("/");
   };
 
   return (
     <aside
-      className={`bg-white shadow-lg fixed  md:relative z-40 transition-all duration-300 ${
+      className={`bg-white shadow-lg fixed top-0 left-0 h-screen z-50 transition-all duration-300 ${
         sidebarOpen ? "w-64" : "w-16"
       }`}>
       <div className="flex flex-col h-full">
+        {/* Header */}
         <div className="flex items-center justify-between px-4 py-4 border-b">
           {sidebarOpen && <span className="font-bold text-xl">Admin</span>}
-          <button className="" onClick={() => setSidebarOpen(!sidebarOpen)}>
+          <button onClick={() => setSidebarOpen(!sidebarOpen)}>
             {sidebarOpen ? <FaTimes /> : <FaBars />}
           </button>
         </div>
 
+        {/* Menu */}
         <nav className="flex-1 px-2 py-4 space-y-2 overflow-y-auto">
           {menuItems.map((item) => (
             <button
@@ -66,6 +79,7 @@ export default function Sidebar({
           ))}
         </nav>
 
+        {/* Footer */}
         <div className="p-2 border-t">
           <button
             onClick={() => navigate("/update-password")}

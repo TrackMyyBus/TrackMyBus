@@ -27,21 +27,27 @@ export default function DriverDashboard() {
   const [sharing, setSharing] = useState(false);
   const [busLocation, setBusLocation] = useState(null);
   const [watchId, setWatchId] = useState(null);
-  const [notifications, setNotifications] = useState([
+  const [notifications] = useState([
     "Pickup point updated near stop 3",
     "Admin: Please confirm your route schedule.",
   ]);
 
-  const busId = "BUS101"; // Unique bus ID (should match StudentDashboard)
+  // TEMP — Replace with real IDs after login integration
+  const busId = "675a0e0e8d9b93290499e7df";
+  const driverId = "675a0e0e8d9b93290499d102";
 
-  // -------- Handle Logout --------
+  // ------------------------
+  // LOGOUT
+  // ------------------------
   const handleLogout = () => {
     localStorage.removeItem("token");
     localStorage.removeItem("activeTab");
-    navigate("/"); // redirect to login page
+    navigate("/");
   };
 
-  // -------- Trip Control --------
+  // ------------------------
+  // TRIP CONTROL
+  // ------------------------
   const handleTripToggle = () => {
     if (!tripStarted) {
       setTripStarted(true);
@@ -64,13 +70,31 @@ export default function DriverDashboard() {
     }, 1000);
   };
 
-  // -------- Location Sharing --------
+  // ------------------------
+  // ⬅ NEW — Notify backend that driver started sharing
+  // ------------------------
+  const notifyBackendStartSharing = async () => {
+    try {
+      await fetch("http://localhost:8080/api/bus-location/start", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ driverId, busId }),
+      });
+    } catch (err) {
+      console.error("Failed to notify backend start:", err);
+    }
+  };
+
+  // ------------------------
+  // GPS LIVE TRACKING
+  // ------------------------
   const startSharingLocation = () => {
     if ("geolocation" in navigator) {
       const id = navigator.geolocation.watchPosition(
         async (pos) => {
           const { latitude, longitude } = pos.coords;
           setBusLocation({ latitude, longitude });
+
           try {
             await fetch("http://localhost:8080/api/bus-location/update", {
               method: "POST",
@@ -84,6 +108,7 @@ export default function DriverDashboard() {
         (err) => console.error("GPS error:", err),
         { enableHighAccuracy: true, timeout: 5000, maximumAge: 0 }
       );
+
       setWatchId(id);
       setSharing(true);
     } else {
@@ -103,13 +128,17 @@ export default function DriverDashboard() {
     if (!tripStarted) stopSharingLocation();
   }, [tripStarted]);
 
+  // ------------------------
+  // UI
+  // ------------------------
   return (
     <div className="min-h-screen bg-gradient-to-br from-yellow-50 to-white p-6 sm:p-8">
-      {/* Header with Logout */}
+      {/* Header */}
       <div className="flex items-center justify-between mb-6">
         <h1 className="text-3xl font-extrabold text-indigo-900">
           Driver Dashboard
         </h1>
+
         <div className="relative">
           <button
             onClick={() => setIsMenuOpen(!isMenuOpen)}
@@ -135,7 +164,7 @@ export default function DriverDashboard() {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Route Info */}
+        {/* Route Card */}
         <Card className="shadow-lg border-none">
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-indigo-900">
@@ -176,6 +205,7 @@ export default function DriverDashboard() {
             </div>
 
             <Progress value={progress} className="h-3" />
+
             <Button
               onClick={handleTripToggle}
               className={`w-full ${
@@ -186,14 +216,21 @@ export default function DriverDashboard() {
               {tripStarted ? "End Trip" : "Start Trip"}
             </Button>
 
+            {/* Enable Live Sharing */}
             <div className="flex items-center justify-between mt-4">
               <p>Enable Live Sharing</p>
+
               <Switch
                 checked={sharing}
                 disabled={!tripStarted}
-                onCheckedChange={(checked) =>
-                  checked ? startSharingLocation() : stopSharingLocation()
-                }
+                onCheckedChange={async (checked) => {
+                  if (checked) {
+                    await notifyBackendStartSharing(); // ⬅ FIXED
+                    startSharingLocation();
+                  } else {
+                    stopSharingLocation();
+                  }
+                }}
               />
             </div>
           </CardContent>
@@ -221,7 +258,7 @@ export default function DriverDashboard() {
         </Card>
       </div>
 
-      {/* Live Map Section */}
+      {/* Live Map */}
       <Card className="mt-8 shadow-lg border-none col-span-full">
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-indigo-900">
@@ -233,7 +270,7 @@ export default function DriverDashboard() {
         </CardContent>
       </Card>
 
-      {/* Bottom Status Bar */}
+      {/* Bottom Bar */}
       <motion.div
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}

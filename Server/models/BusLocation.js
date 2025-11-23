@@ -10,6 +10,7 @@ const busLocationSchema = new mongoose.Schema({
         type: mongoose.Schema.Types.ObjectId,
         ref: "Driver",
     },
+
     latitude: {
         type: Number,
         required: true,
@@ -18,25 +19,24 @@ const busLocationSchema = new mongoose.Schema({
         type: Number,
         required: true,
     },
-    speed: {
-        type: Number,
-        default: 0, // in km/h
-    },
-    accuracy: {
-        type: Number, // GPS accuracy in meters
-    },
+
+    speed: { type: Number, default: 0 },
+    accuracy: { type: Number },
+
     timestamp: {
         type: Date,
         default: Date.now,
     },
+
     status: {
         type: String,
         enum: ["moving", "stopped", "offline"],
         default: "moving",
     },
-    address: {
-        type: String, // optional reverse geocode for display
-    },
+
+    address: { type: String },
 });
+
+busLocationSchema.index({ bus: 1, timestamp: -1 });
 
 export default mongoose.model("BusLocation", busLocationSchema);

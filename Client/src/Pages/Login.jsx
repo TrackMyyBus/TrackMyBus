@@ -1,11 +1,13 @@
-import React, { useState } from "react";
+import React, { useState, useContext } from "react";
 import { motion } from "framer-motion";
 import { Link, useNavigate } from "react-router-dom";
 import axios from "axios";
+import { AuthContext } from "../contexts/AuthContext";
 
 export default function Login() {
   const [form, setForm] = useState({ email: "", password: "" });
   const navigate = useNavigate();
+  const { loginUser } = useContext(AuthContext);
 
   const handleChange = (e) =>
     setForm({ ...form, [e.target.name]: e.target.value });
@@ -17,15 +19,16 @@ export default function Login() {
         "http://localhost:5000/api/auth/login",
         form
       );
-      localStorage.setItem("token", res.data.token);
-      localStorage.setItem("user", JSON.stringify(res.data.user));
 
-      // redirect based on role
+      // Use AuthContext to save user and token
+      loginUser(res.data.user, res.data.token);
+
+      // Redirect based on role
       if (res.data.user.role === "admin") navigate("/admin");
       else if (res.data.user.role === "driver") navigate("/driver");
       else navigate("/student");
     } catch (err) {
-      alert(err.response.data.message);
+      alert(err.response?.data?.message || "Login failed");
     }
   };
 

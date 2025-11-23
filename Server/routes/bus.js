@@ -1,18 +1,22 @@
 import express from "express";
 import {
-    addBus,
-    getAllBuses,
-    getBusById,
+    createBus,
     updateBus,
+    getBuses,
+    getBus,
     deleteBus,
 } from "../controllers/bus.js";
+import { protect, verifyAdmin } from "../middleware/auth.js";
 
 const router = express.Router();
 
-router.post("/add", addBus);
-router.get("/", getAllBuses);
-router.get("/:id", getBusById);
-router.put("/:id", updateBus);
-router.delete("/:id", deleteBus);
+// All routes require admin access
+router.use(protect, verifyAdmin);
+
+router.post("/", createBus);        // Add bus
+router.get("/", getBuses);          // Get all buses
+router.get("/:id", getBus);         // Get single bus
+router.put("/:id", updateBus);      // Update bus
+router.delete("/:id", deleteBus);   // Delete bus
 
 export default router;

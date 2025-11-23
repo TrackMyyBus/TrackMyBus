@@ -1,26 +1,23 @@
 import mongoose from "mongoose";
 
 const busSchema = new mongoose.Schema({
-    // Link to institute/admin that owns the bus
     institute: {
         type: mongoose.Schema.Types.ObjectId,
         ref: "Admin",
         required: true,
     },
 
-    // Bus Identification
     busId: {
         type: String,
         required: true,
-        unique: true, // e.g. BUS001
+        unique: true,
     },
     busNumberPlate: {
         type: String,
         required: true,
-        unique: true, // actual number plate e.g. HR26DK1234
+        unique: true,
     },
 
-    // Assignment Details
     assignedDriver: {
         type: mongoose.Schema.Types.ObjectId,
         ref: "Driver",
@@ -30,15 +27,6 @@ const busSchema = new mongoose.Schema({
         ref: "Route",
     },
 
-    // Tracking Info
-    currentLocation: {
-        latitude: { type: Number },
-        longitude: { type: Number },
-        speed: { type: Number, default: 0 },
-        lastUpdated: { type: Date },
-    },
-
-    // Operational Status
     status: {
         type: String,
         enum: ["active", "inactive", "maintenance"],
@@ -48,6 +36,21 @@ const busSchema = new mongoose.Schema({
     createdAt: {
         type: Date,
         default: Date.now,
+    },
+
+    trackingStatus: {
+        type: String,
+        enum: ["online", "offline"],
+        default: "offline",
+    },
+
+    currentLocation: {
+        latitude: { type: Number, default: null },
+        longitude: { type: Number, default: null },
+        speed: { type: Number, default: null },
+        heading: { type: Number, default: null },
+        battery: { type: Number, default: null },
+        lastUpdated: { type: Date, default: null },
     },
 });
 

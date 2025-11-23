@@ -1,23 +1,19 @@
 import express from "express";
 import {
-    getDriverDashboard,
-    updateDriverProfile,
-    updateBusLocation,
-    getBusLocation,
+    getDrivers,
+    addDriver,
+    updateDriver,
 } from "../controllers/driver.js";
 
 const router = express.Router();
 
-// Get driver dashboard (assigned bus, route, students)
-router.get("/dashboard/:driverId", getDriverDashboard);
+// GET all drivers
+router.get("/", getDrivers);
 
-// Update driver profile
-router.put("/update/:driverId", updateDriverProfile);
+// POST new driver
+router.post("/", addDriver);
 
-// Update or send live bus location
-router.post("/update-location/:driverId", updateBusLocation);
-
-// Get live bus location by busId
-router.get("/bus-location/:busId", getBusLocation);
+// PUT update driver
+router.put("/:id", updateDriver);
 
 export default router;
