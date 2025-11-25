@@ -16,38 +16,66 @@ import {
   FaCog,
   FaKey,
 } from "react-icons/fa";
+
 import Map from "@/components/Map";
 import "leaflet/dist/leaflet.css";
 
 export default function DriverDashboard() {
   const navigate = useNavigate();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+
   const [tripStarted, setTripStarted] = useState(false);
   const [progress, setProgress] = useState(0);
   const [sharing, setSharing] = useState(false);
   const [busLocation, setBusLocation] = useState(null);
   const [watchId, setWatchId] = useState(null);
-  const [notifications] = useState([
-    "Pickup point updated near stop 3",
-    "Admin: Please confirm your route schedule.",
-  ]);
 
-  // TEMP — Replace with real IDs after login integration
-  const busId = "675a0e0e8d9b93290499e7df";
-  const driverId = "675a0e0e8d9b93290499d102";
+  const [driver, setDriver] = useState(null);
+  const [bus, setBus] = useState(null);
+  const [route, setRoute] = useState(null);
 
-  // ------------------------
+  const user = JSON.parse(localStorage.getItem("user"));
+  const driverUserId = user?.userId;
+
+  // ----------------------------------------
   // LOGOUT
-  // ------------------------
+  // ----------------------------------------
   const handleLogout = () => {
     localStorage.removeItem("token");
+    localStorage.removeItem("user");
     localStorage.removeItem("activeTab");
     navigate("/");
   };
 
-  // ------------------------
+  // ----------------------------------------
+  // FETCH REAL DRIVER DASHBOARD DATA
+  // ----------------------------------------
+  useEffect(() => {
+    if (!driverUserId) return;
+
+    const loadDashboard = async () => {
+      try {
+        const res = await fetch(
+          `http://localhost:5000/api/drivers/dashboard/${driverUserId}`
+        );
+        const data = await res.json();
+
+        if (data.success) {
+          setDriver(data.dashboard.driver);
+          setBus(data.dashboard.bus);
+          setRoute(data.dashboard.route);
+        }
+      } catch (err) {
+        console.error("Driver dashboard error:", err);
+      }
+    };
+
+    loadDashboard();
+  }, [driverUserId]);
+
+  // ----------------------------------------
   // TRIP CONTROL
-  // ------------------------
+  // ----------------------------------------
   const handleTripToggle = () => {
     if (!tripStarted) {
       setTripStarted(true);
@@ -70,24 +98,24 @@ export default function DriverDashboard() {
     }, 1000);
   };
 
-  // ------------------------
-  // ⬅ NEW — Notify backend that driver started sharing
-  // ------------------------
+  // ----------------------------------------
+  // Notify backend when driver starts sharing
+  // ----------------------------------------
   const notifyBackendStartSharing = async () => {
     try {
-      await fetch("http://localhost:8080/api/bus-location/start", {
+      await fetch("http://localhost:5000/api/bus-location/start", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ driverId, busId }),
+        body: JSON.stringify({ driverId: driver?._id, busId: bus?._id }),
       });
     } catch (err) {
-      console.error("Failed to notify backend start:", err);
+      console.error("Failed to notify backend:", err);
     }
   };
 
-  // ------------------------
-  // GPS LIVE TRACKING
-  // ------------------------
+  // ----------------------------------------
+  // GPS LIVE LOCATION SHARING
+  // ----------------------------------------
   const startSharingLocation = () => {
     if ("geolocation" in navigator) {
       const id = navigator.geolocation.watchPosition(
@@ -95,11 +123,13 @@ export default function DriverDashboard() {
           const { latitude, longitude } = pos.coords;
           setBusLocation({ latitude, longitude });
 
+          if (!bus?._id) return;
+
           try {
-            await fetch("http://localhost:8080/api/bus-location/update", {
+            await fetch("http://localhost:5000/api/bus-location/update", {
               method: "POST",
               headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ busId, latitude, longitude }),
+              body: JSON.stringify({ busId: bus._id, latitude, longitude }),
             });
           } catch (err) {
             console.error("Failed to update location:", err);
@@ -128,9 +158,9 @@ export default function DriverDashboard() {
     if (!tripStarted) stopSharingLocation();
   }, [tripStarted]);
 
-  // ------------------------
+  // ----------------------------------------
   // UI
-  // ------------------------
+  // ----------------------------------------
   return (
     <div className="min-h-screen bg-gradient-to-br from-yellow-50 to-white p-6 sm:p-8">
       {/* Header */}
@@ -163,37 +193,40 @@ export default function DriverDashboard() {
         </div>
       </div>
 
+      {/* GRID */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Route Card */}
+        {/* ROUTE CARD */}
         <Card className="shadow-lg border-none">
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-indigo-900">
               <FaRoute /> Assigned Route
             </CardTitle>
           </CardHeader>
+
           <CardContent className="space-y-2 text-slate-600">
             <p>
-              <strong>Bus No:</strong> MP09-B-2211
+              <strong>Bus:</strong> {bus?.busNumberPlate || "Loading..."}
             </p>
+
             <p>
-              <strong>Route:</strong> Vijay Nagar → Palasia → College
+              <strong>Route:</strong> {route?.routeName || "Loading..."}
             </p>
+
             <p>
-              <strong>Start Time:</strong> 7:30 AM
-            </p>
-            <p>
-              <strong>Estimated Arrival:</strong> 8:10 AM
+              <strong>Stops:</strong>{" "}
+              {route?.stops?.map((s) => s.name).join(" → ") || "Loading..."}
             </p>
           </CardContent>
         </Card>
 
-        {/* Trip Control */}
+        {/* TRIP CONTROL */}
         <Card className="shadow-lg border-none">
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-indigo-900">
               <FaBusAlt /> Trip Control
             </CardTitle>
           </CardHeader>
+
           <CardContent className="space-y-4">
             <div className="flex items-center justify-between">
               <p className="font-medium">Trip Status:</p>
@@ -216,7 +249,7 @@ export default function DriverDashboard() {
               {tripStarted ? "End Trip" : "Start Trip"}
             </Button>
 
-            {/* Enable Live Sharing */}
+            {/* Sharing Switch */}
             <div className="flex items-center justify-between mt-4">
               <p>Enable Live Sharing</p>
 
@@ -225,7 +258,7 @@ export default function DriverDashboard() {
                 disabled={!tripStarted}
                 onCheckedChange={async (checked) => {
                   if (checked) {
-                    await notifyBackendStartSharing(); // ⬅ FIXED
+                    await notifyBackendStartSharing();
                     startSharingLocation();
                   } else {
                     stopSharingLocation();
@@ -236,41 +269,34 @@ export default function DriverDashboard() {
           </CardContent>
         </Card>
 
-        {/* Notifications */}
+        {/* NOTIFICATIONS */}
         <Card className="shadow-lg border-none">
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-indigo-900">
               <FaBell /> Notifications
             </CardTitle>
           </CardHeader>
+
           <CardContent className="space-y-3 text-slate-600">
-            {notifications.map((n, i) => (
-              <motion.div
-                key={i}
-                initial={{ opacity: 0, x: 10 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ duration: 0.3 }}
-                className="bg-yellow-50 p-3 rounded-lg shadow-sm">
-                {n}
-              </motion.div>
-            ))}
+            <p>No notifications yet</p>
           </CardContent>
         </Card>
       </div>
 
-      {/* Live Map */}
+      {/* MAP */}
       <Card className="mt-8 shadow-lg border-none col-span-full">
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-indigo-900">
             <FaMapMarkerAlt /> Live Bus Location
           </CardTitle>
         </CardHeader>
+
         <CardContent>
           <Map location={busLocation} height="300px" />
         </CardContent>
       </Card>
 
-      {/* Bottom Bar */}
+      {/* FOOTER */}
       <motion.div
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
@@ -279,7 +305,10 @@ export default function DriverDashboard() {
           <FaRegClock />
           {tripStarted ? "Trip in progress..." : "Awaiting trip start"}
         </div>
-        <span className="text-slate-600 text-sm">Driver ID: D102</span>
+
+        <span className="text-slate-600 text-sm">
+          Driver ID: {driver?.driverId || "Loading..."}
+        </span>
       </motion.div>
     </div>
   );

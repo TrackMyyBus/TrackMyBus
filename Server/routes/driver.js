@@ -1,19 +1,27 @@
 import express from "express";
 import {
-    getDrivers,
-    addDriver,
+    createDriver,
+    getAllDrivers,
+    getDriverById,
     updateDriver,
+    deleteDriver,
+    assignBusRoute,
+    driverDashboard
 } from "../controllers/driver.js";
 
 const router = express.Router();
 
-// GET all drivers
-router.get("/", getDrivers);
+// CRUD
+router.post("/create", createDriver);
+router.get("/all/:adminId", getAllDrivers);
+router.get("/:id", getDriverById);
+router.put("/update/:id", updateDriver);
+router.delete("/delete/:id", deleteDriver);
 
-// POST new driver
-router.post("/", addDriver);
+// Assign
+router.put("/assign/:driverId", assignBusRoute);
 
-// PUT update driver
-router.put("/:id", updateDriver);
+// Dashboard
+router.get("/dashboard/:userId", driverDashboard);
 
 export default router;

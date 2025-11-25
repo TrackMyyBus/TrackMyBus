@@ -7,21 +7,15 @@ const busSchema = new mongoose.Schema({
         required: true,
     },
 
-    busId: {
-        type: String,
-        required: true,
-        unique: true,
-    },
-    busNumberPlate: {
-        type: String,
-        required: true,
-        unique: true,
-    },
+    busId: { type: String, required: true, unique: true },
+
+    busNumberPlate: { type: String, required: true, unique: true },
 
     assignedDriver: {
         type: mongoose.Schema.Types.ObjectId,
         ref: "Driver",
     },
+
     assignedRoute: {
         type: mongoose.Schema.Types.ObjectId,
         ref: "Route",
@@ -33,10 +27,7 @@ const busSchema = new mongoose.Schema({
         default: "active",
     },
 
-    createdAt: {
-        type: Date,
-        default: Date.now,
-    },
+    createdAt: { type: Date, default: Date.now },
 
     trackingStatus: {
         type: String,
@@ -45,12 +36,12 @@ const busSchema = new mongoose.Schema({
     },
 
     currentLocation: {
-        latitude: { type: Number, default: null },
-        longitude: { type: Number, default: null },
-        speed: { type: Number, default: null },
-        heading: { type: Number, default: null },
-        battery: { type: Number, default: null },
-        lastUpdated: { type: Date, default: null },
+        latitude: Number,
+        longitude: Number,
+        speed: Number,
+        heading: Number,
+        battery: Number,
+        lastUpdated: Date,
     },
 });
 

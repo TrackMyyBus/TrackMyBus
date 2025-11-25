@@ -1,22 +1,29 @@
 import express from "express";
 import {
     createBus,
+    getAllBuses,
+    getBusById,
     updateBus,
-    getBuses,
-    getBus,
     deleteBus,
+    assignDriver,
+    assignRoute,
+    getBusFullInfo
 } from "../controllers/bus.js";
-import { protect, verifyAdmin } from "../middleware/auth.js";
 
 const router = express.Router();
 
-// All routes require admin access
-router.use(protect, verifyAdmin);
+// CRUD
+router.post("/create", createBus);
+router.get("/all/:adminId", getAllBuses);
+router.get("/:id", getBusById);
+router.put("/update/:id", updateBus);
+router.delete("/delete/:id", deleteBus);
 
-router.post("/", createBus);        // Add bus
-router.get("/", getBuses);          // Get all buses
-router.get("/:id", getBus);         // Get single bus
-router.put("/:id", updateBus);      // Update bus
-router.delete("/:id", deleteBus);   // Delete bus
+// Assignments
+router.put("/assign-driver/:busId", assignDriver);
+router.put("/assign-route/:busId", assignRoute);
+
+// Bus+Driver+Route info
+router.get("/info/:busId", getBusFullInfo);
 
 export default router;

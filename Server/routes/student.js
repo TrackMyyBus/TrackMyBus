@@ -1,19 +1,31 @@
 import express from "express";
 import {
-    getStudents,
-    addStudent,
+    createStudent,
+    getAllStudents,
+    getStudentById,
     updateStudent,
+    deleteStudent,
+    assignBusRoute,
+    studentDashboard,
+    getStudentBusLiveLocation
 } from "../controllers/student.js";
 
 const router = express.Router();
 
-// GET all students
-router.get("/", getStudents);
+// CRUD
+router.post("/create", createStudent);
+router.get("/all/:adminId", getAllStudents);
+router.get("/:id", getStudentById);
+router.put("/update/:id", updateStudent);
+router.delete("/delete/:id", deleteStudent);
 
-// POST new student
-router.post("/", addStudent);
+// Assign
+router.put("/assign/:id", assignBusRoute);
 
-// PUT update student
-router.put("/:id", updateStudent);
+// Dashboard
+router.get("/dashboard/:userId", studentDashboard);
+
+// Live tracking
+router.get("/live-location/:busId", getStudentBusLiveLocation);
 
 export default router;

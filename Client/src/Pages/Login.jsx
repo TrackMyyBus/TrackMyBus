@@ -1,3 +1,5 @@
+// Login.jsx
+
 import React, { useState, useContext } from "react";
 import { motion } from "framer-motion";
 import { Link, useNavigate } from "react-router-dom";
@@ -14,19 +16,34 @@ export default function Login() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+
     try {
       const res = await axios.post(
         "http://localhost:5000/api/auth/login",
         form
       );
 
-      // Use AuthContext to save user and token
-      loginUser(res.data.user, res.data.token);
+      // ⭐ Correct destructure
+      const { userData, token } = res.data;
+
+      // Save in AuthContext
+      loginUser(
+        {
+          userId: userData.userId,
+          role: userData.role,
+          profile: userData.profile,
+          adminId: userData.adminId, // ⭐ WORKING NOW
+        },
+        token
+      );
+
+      alert("Login successful!");
 
       // Redirect based on role
-      if (res.data.user.role === "admin") navigate("/admin");
-      else if (res.data.user.role === "driver") navigate("/driver");
-      else navigate("/student");
+      if (userData.role === "admin") navigate("/admin");
+      else if (userData.role === "driver") navigate("/driver");
+      else if (userData.role === "student") navigate("/student");
+      else navigate("/");
     } catch (err) {
       alert(err.response?.data?.message || "Login failed");
     }
@@ -42,6 +59,7 @@ export default function Login() {
         <h2 className="text-2xl font-extrabold text-indigo-900 mb-6 text-center">
           Login
         </h2>
+
         <form className="space-y-4" onSubmit={handleSubmit}>
           <input
             type="text"
@@ -49,32 +67,36 @@ export default function Login() {
             placeholder="Email"
             value={form.email}
             onChange={handleChange}
-            className="w-full px-4 py-2 rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition"
             required
+            className="w-full px-4 py-2 rounded-lg border border-slate-300"
           />
+
           <input
             type="password"
             name="password"
             placeholder="Password"
             value={form.password}
             onChange={handleChange}
-            className="w-full px-4 py-2 rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition"
             required
+            className="w-full px-4 py-2 rounded-lg border border-slate-300"
           />
+
           <button
             type="submit"
-            className="w-full py-2 rounded-lg bg-yellow-500 hover:bg-yellow-600 text-white font-medium transition">
+            className="w-full py-2 rounded-lg bg-yellow-500 hover:bg-yellow-600 text-white font-medium">
             Login
           </button>
         </form>
+
         <div className="flex justify-between mt-4 text-sm text-slate-600">
           <Link
             to="/update-password"
             className="text-yellow-500 hover:underline">
             Forgot Password?
           </Link>
+
           <Link to="/signup" className="text-yellow-500 hover:underline">
-            Sign Up
+            Admin Sign Up
           </Link>
         </div>
       </motion.div>

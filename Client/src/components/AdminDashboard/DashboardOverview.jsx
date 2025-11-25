@@ -1,8 +1,8 @@
 import React from "react";
 import { motion } from "framer-motion";
 import {
-  LineChart,
-  Line,
+  BarChart,
+  Bar,
   XAxis,
   YAxis,
   CartesianGrid,
@@ -12,19 +12,12 @@ import {
 import { FaUsers, FaUserCog, FaBus, FaRoute } from "react-icons/fa";
 
 export default function DashboardOverview({ stats, chart }) {
-  // Provide defaults if props are missing
-  const safeStats = stats || {
-    totalStudents: 0,
-    totalDrivers: 0,
-    totalBuses: 0,
-    activeRoutes: 0,
+  const safeStats = {
+    totalStudents: stats?.totalStudents || 0,
+    totalDrivers: stats?.totalDrivers || 0,
+    totalBuses: stats?.totalBuses || 0,
+    activeRoutes: stats?.activeRoutes || 0,
   };
-  const safeChart = chart || [
-    { month: "Jan", students: 0, buses: 0 },
-    { month: "Feb", students: 0, buses: 0 },
-    { month: "Mar", students: 0, buses: 0 },
-    { month: "Apr", students: 0, buses: 0 },
-  ];
 
   const icons = [<FaUsers />, <FaUserCog />, <FaBus />, <FaRoute />];
   const colors = [
@@ -46,6 +39,13 @@ export default function DashboardOverview({ stats, chart }) {
     safeStats.activeRoutes,
   ];
 
+  const barData = [
+    { name: "Students", count: safeStats.totalStudents, fill: "#eab308" },
+    { name: "Drivers", count: safeStats.totalDrivers, fill: "#3b82f6" },
+    { name: "Buses", count: safeStats.totalBuses, fill: "#22c55e" },
+    { name: "Routes", count: safeStats.activeRoutes, fill: "#9333ea" },
+  ];
+
   return (
     <div className="ml-16">
       <div className="flex flex-col sm:flex-row justify-between items-center mb-6">
@@ -54,6 +54,7 @@ export default function DashboardOverview({ stats, chart }) {
         </h1>
       </div>
 
+      {/* STAT CARDS */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
         {labels.map((label, i) => (
           <motion.div
@@ -69,23 +70,18 @@ export default function DashboardOverview({ stats, chart }) {
         ))}
       </div>
 
-      <div className="bg-white shadow rounded-xl p-6">
-        <h2 className="text-lg font-semibold mb-4">
-          Monthly Activity Overview
-        </h2>
-        <ResponsiveContainer width="100%" height={300}>
-          <LineChart data={safeChart}>
+      {/* BAR CHART */}
+      <div className="bg-white shadow rounded-xl p-6 mt-6">
+        <h2 className="text-lg font-semibold mb-4">System Overview</h2>
+
+        <ResponsiveContainer width="100%" height={320}>
+          <BarChart data={barData} barSize={55}>
             <CartesianGrid strokeDasharray="3 3" />
-            <XAxis dataKey="category" />
-            <YAxis />
+            <XAxis dataKey="name" />
+            <YAxis allowDecimals={false} />
             <Tooltip />
-            <Line
-              type="monotone"
-              dataKey="count"
-              stroke="#3b82f6"
-              strokeWidth={2}
-            />
-          </LineChart>
+            <Bar dataKey="count" radius={[8, 8, 0, 0]} />
+          </BarChart>
         </ResponsiveContainer>
       </div>
     </div>

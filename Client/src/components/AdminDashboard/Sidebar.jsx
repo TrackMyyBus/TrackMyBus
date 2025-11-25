@@ -1,3 +1,7 @@
+// =======================================
+// Sidebar.jsx (FINAL FIXED VERSION)
+// =======================================
+
 import React, { useContext, useEffect, useState } from "react";
 import {
   FaBars,
@@ -12,27 +16,25 @@ import {
   FaKey,
   FaMapMarkerAlt,
 } from "react-icons/fa";
+
 import { useNavigate } from "react-router-dom";
-import { AuthContext } from "../../contexts/AuthContext";
+import { AuthContext } from "../../contexts/AuthContext"; // 🔥 Correct import
 
 export default function Sidebar({ activeTab, setActiveTab }) {
   const navigate = useNavigate();
   const { logoutUser } = useContext(AuthContext);
 
-  // Make sidebar responsive & persistent
+  // Sidebar responsive persisted state
   const [sidebarOpen, setSidebarOpen] = useState(
-    typeof window !== "undefined"
-      ? JSON.parse(localStorage.getItem("sidebarOpen")) ?? true
-      : true
+    JSON.parse(localStorage.getItem("sidebarOpen")) ?? true
   );
 
-  // Save sidebar state in localStorage
+  // Save sidebar state
   useEffect(() => {
-    if (typeof window !== "undefined") {
-      localStorage.setItem("sidebarOpen", JSON.stringify(sidebarOpen));
-    }
+    localStorage.setItem("sidebarOpen", JSON.stringify(sidebarOpen));
   }, [sidebarOpen]);
 
+  // Menu items
   const menuItems = [
     { key: "dashboard", label: "Dashboard", icon: <FaUserCog /> },
     { key: "students", label: "Students", icon: <FaUsers /> },
@@ -45,8 +47,8 @@ export default function Sidebar({ activeTab, setActiveTab }) {
   ];
 
   const handleLogout = () => {
-    logoutUser(); // clears user & token
-    setActiveTab("dashboard"); // optional: reset active tab
+    logoutUser();
+    setActiveTab("dashboard");
     navigate("/");
   };
 
@@ -87,6 +89,7 @@ export default function Sidebar({ activeTab, setActiveTab }) {
             <FaKey />
             {sidebarOpen && "Reset Password"}
           </button>
+
           <button
             onClick={handleLogout}
             className="flex items-center gap-2 w-full p-2 rounded hover:bg-red-100 text-red-600 transition-colors">

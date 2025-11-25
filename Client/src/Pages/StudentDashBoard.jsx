@@ -1,9 +1,12 @@
+// StudentDashboard.jsx
+
 import React, { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
+
 import {
   FaBell,
   FaClock,
@@ -14,12 +17,13 @@ import {
   FaCog,
   FaKey,
 } from "react-icons/fa";
+
 import io from "socket.io-client";
 import { MapContainer, TileLayer, Marker, Popup } from "react-leaflet";
 import "leaflet/dist/leaflet.css";
 import L from "leaflet";
 
-// Fix marker icons
+// Fix leaflet icons
 delete L.Icon.Default.prototype._getIconUrl;
 L.Icon.Default.mergeOptions({
   iconRetinaUrl:
@@ -30,48 +34,112 @@ L.Icon.Default.mergeOptions({
     "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png",
 });
 
-// Connect socket
+// socket connect
 const socket = io("http://localhost:5000");
 
 export default function StudentDashboard() {
+  const navigate = useNavigate();
+
+  // ⭐ LOAD VALUES STORED IN AUTHCONTEXT
+  const studentUserId = localStorage.getItem("studentUserId"); // API calls
+  const enrollmentId = localStorage.getItem("enrollmentId"); // Display real Student ID
+
   const [eta, setEta] = useState("5 mins");
   const [isTracking, setIsTracking] = useState(false);
   const [busLocation, setBusLocation] = useState(null);
-  const [notifications, setNotifications] = useState([
-    "Bus 101 left Vijay Nagar stop.",
-    "Slight delay due to traffic near Palasia.",
-  ]);
+
+  const [student, setStudent] = useState(null);
+  const [busInfo, setBusInfo] = useState(null);
+  const [driverInfo, setDriverInfo] = useState(null);
+  const [routeInfo, setRouteInfo] = useState(null);
+  const [notifications, setNotifications] = useState([]);
+
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
-  const navigate = useNavigate();
-
-  const studentId = "ST201"; // replace with real student ID from token later
-
+  // LOGOUT
   const handleLogout = () => {
-    localStorage.removeItem("token");
-    localStorage.removeItem("activeTab");
+    localStorage.clear();
     navigate("/");
   };
 
-  // SOCKET LISTENERS
+  // -----------------------------------------------------------
+  // 1️⃣ FETCH STUDENT DASHBOARD
+  // -----------------------------------------------------------
   useEffect(() => {
-    // Join student room (for receiving driver updates)
-    socket.emit("join-student", studentId);
+    if (!studentUserId) return;
 
-    // Receive live bus location from backend (ROOM based)
+    const fetchDashboard = async () => {
+      try {
+        const res = await fetch(
+          `http://localhost:5000/api/students/dashboard/${studentUserId}`
+        );
+        const data = await res.json();
+
+        setStudent(data.student);
+        setNotifications(data.notifications || []);
+
+        if (data.student?.assignedBus) {
+          loadBusInfo(data.student.assignedBus);
+          loadLastLocation(data.student.assignedBus);
+        }
+      } catch (err) {
+        console.log("Dashboard error:", err);
+      }
+    };
+
+    fetchDashboard();
+  }, [studentUserId]);
+
+  // -----------------------------------------------------------
+  // 2️⃣ LOAD BUS + DRIVER + ROUTE
+  // -----------------------------------------------------------
+  const loadBusInfo = async (busId) => {
+    try {
+      const res = await fetch(`http://localhost:5000/api/bus/info/${busId}`);
+      const data = await res.json();
+
+      if (data.success) {
+        setBusInfo(data.bus);
+        setDriverInfo(data.bus.assignedDriver);
+        setRouteInfo(data.bus.assignedRoute);
+      }
+    } catch (err) {
+      console.log("Bus info error:", err);
+    }
+  };
+
+  // -----------------------------------------------------------
+  // 3️⃣ LOAD LATEST LOCATION
+  // -----------------------------------------------------------
+  const loadLastLocation = async (busId) => {
+    try {
+      const res = await fetch(
+        `http://localhost:5000/api/location/latest/${busId}`
+      );
+      const data = await res.json();
+
+      if (data?.latitude && data?.longitude) {
+        setBusLocation({ lat: data.latitude, lng: data.longitude });
+      }
+    } catch (err) {
+      console.log("Location error:", err);
+    }
+  };
+
+  // -----------------------------------------------------------
+  // 4️⃣ SOCKET LIVE LOCATION
+  // -----------------------------------------------------------
+  useEffect(() => {
+    if (!studentUserId) return;
+
+    socket.emit("join-student", studentUserId);
+
     socket.on("location-update", (data) => {
-      console.log("📍 Bus Update Received:", data);
-
-      setBusLocation({
-        lat: data.latitude,
-        lng: data.longitude,
-      });
+      setBusLocation({ lat: data.latitude, lng: data.longitude });
     });
 
-    return () => {
-      socket.off("location-update");
-    };
-  }, []);
+    return () => socket.off("location-update");
+  }, [studentUserId]);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-yellow-50 to-white p-8">
@@ -79,6 +147,7 @@ export default function StudentDashboard() {
         <h1 className="text-3xl font-extrabold text-indigo-900">
           Student Dashboard
         </h1>
+
         <div className="relative">
           <button
             onClick={() => setIsMenuOpen(!isMenuOpen)}
@@ -111,16 +180,20 @@ export default function StudentDashboard() {
               <FaBus /> Bus Information
             </CardTitle>
           </CardHeader>
+
           <CardContent className="text-slate-600 space-y-2">
             <p>
-              <strong>Bus Number:</strong> MP09-B-2211
+              <strong>Bus Number:</strong>{" "}
+              {busInfo?.busNumberPlate || "Loading..."}
             </p>
             <p>
-              <strong>Driver Name:</strong> Ramesh Kumar
+              <strong>Driver Name:</strong> {driverInfo?.name || "Loading..."}
             </p>
             <p>
-              <strong>Contact:</strong> +91 9876543210
+              <strong>Contact:</strong>{" "}
+              {driverInfo?.contactNumber || "Loading..."}
             </p>
+
             <div>
               <p>
                 <strong>Status:</strong>
@@ -132,27 +205,41 @@ export default function StudentDashboard() {
           </CardContent>
         </Card>
 
-        {/* Route & ETA */}
+        {/* Route */}
         <Card className="shadow-lg border-none">
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-indigo-900">
               <FaRoad /> Route Details
             </CardTitle>
           </CardHeader>
+
           <CardContent className="text-slate-600 space-y-3">
             <p>
-              <strong>Route:</strong> Vijay Nagar → Palasia → College
+              <strong>Route:</strong> {routeInfo?.routeName || "Loading..."}
             </p>
+
+            {/* FIX: Show real stop names */}
+            <p className="text-sm text-gray-600">
+              <strong>Stops:</strong>{" "}
+              {routeInfo?.stops?.map((s) => s.name).join(" → ") || "Loading..."}
+            </p>
+
             <p className="flex items-center gap-2">
               <FaClock className="text-yellow-500" />
               <span>
                 <strong>ETA:</strong> {eta}
               </span>
             </p>
+
             <Button
               onClick={() => {
                 setIsTracking(!isTracking);
-                socket.emit("request-bus-location", { studentId });
+                if (!isTracking && busInfo?._id) {
+                  loadLastLocation(busInfo._id);
+                }
+                socket.emit("request-bus-location", {
+                  studentId: studentUserId,
+                });
               }}
               className={`w-full ${
                 isTracking
@@ -171,38 +258,49 @@ export default function StudentDashboard() {
               <FaBell /> Notifications
             </CardTitle>
           </CardHeader>
+
           <CardContent className="space-y-3 text-slate-600">
-            {notifications.map((n, i) => (
+            {notifications.length === 0 && (
+              <p className="text-sm text-gray-500">No notifications</p>
+            )}
+
+            {notifications.map((note, i) => (
               <motion.div
                 key={i}
                 initial={{ opacity: 0, x: 10 }}
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ duration: 0.3 }}
                 className="bg-yellow-50 p-3 rounded-lg shadow-sm">
-                {n}
+                {note}
               </motion.div>
             ))}
           </CardContent>
         </Card>
       </div>
 
-      {/* Map Section */}
+      {/* MAP */}
       <Card className="mt-8 shadow-lg border-none col-span-full">
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-indigo-900">
             <FaMapMarkerAlt /> Live Bus Location
           </CardTitle>
         </CardHeader>
+
         <CardContent>
           {busLocation ? (
             <MapContainer
-              center={[busLocation.lat || 22.7196, busLocation.lng || 75.8577]}
+              center={[busLocation.lat, busLocation.lng]}
               zoom={14}
-              style={{ height: "350px", width: "100%", borderRadius: "12px" }}>
+              style={{
+                height: "350px",
+                width: "100%",
+                borderRadius: "12px",
+              }}>
               <TileLayer
                 url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
                 attribution="&copy; OpenStreetMap contributors"
               />
+
               <Marker position={[busLocation.lat, busLocation.lng]}>
                 <Popup>🚌 Bus is here</Popup>
               </Marker>
@@ -217,7 +315,7 @@ export default function StudentDashboard() {
         </CardContent>
       </Card>
 
-      {/* Footer */}
+      {/* FOOTER */}
       <motion.div
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
@@ -228,7 +326,11 @@ export default function StudentDashboard() {
             ? "Tracking live bus location..."
             : "Click 'Track My Bus' to start"}
         </div>
-        <span className="text-slate-600 text-sm">Student ID: {studentId}</span>
+
+        {/* ⭐ PRINT STUDENT ENROLLMENT ID */}
+        <span className="text-slate-600 text-sm">
+          Student ID: {enrollmentId}
+        </span>
       </motion.div>
     </div>
   );

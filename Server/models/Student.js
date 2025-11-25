@@ -1,27 +1,25 @@
 import mongoose from "mongoose";
 
 const studentSchema = new mongoose.Schema({
+    // Linked login user account
+    userId: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "User",
+        required: true,
+    },
+
+    // Linked institute (Admin)
     institute: {
         type: mongoose.Schema.Types.ObjectId,
         ref: "Admin",
         required: true,
     },
 
+    // Basic details
     name: {
         type: String,
         required: true,
         trim: true,
-    },
-
-    enrollmentId: {
-        type: String,
-        required: true,
-        unique: true,
-    },
-
-    enrollmentYear: {
-        type: Number,
-        required: true,
     },
 
     email: {
@@ -35,30 +33,36 @@ const studentSchema = new mongoose.Schema({
         required: true,
     },
 
-    address: { type: String },
+    address: {
+        type: String,
+    },
 
-    // Bus details
-    busNumber: { type: String, required: true },
-    busPlateNumber: { type: String, required: true },
+    // College details
+    enrollmentId: {
+        type: String,
+        required: true,
+        unique: true,
+    },
 
-    assignedBus: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: "Bus",
+    enrollmentYear: {
+        type: Number,
         required: true,
     },
 
-    assignedDriver: {
+    // Bus details
+    assignedBus: {
         type: mongoose.Schema.Types.ObjectId,
-        ref: "Driver",
-        required: true,
+        ref: "Bus",
+        required: false,
     },
 
     assignedRoute: {
         type: mongoose.Schema.Types.ObjectId,
         ref: "Route",
-        required: true,
+        required: false,
     },
 
+    // Account status
     status: {
         type: String,
         enum: ["active", "inactive"],

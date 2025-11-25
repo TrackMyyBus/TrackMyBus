@@ -1,80 +1,93 @@
-import BusLocation from "../models/BusLocation.js";
-import Driver from "../models/Driver.js";
 import Bus from "../models/Bus.js";
+import BusLocation from "../models/BusLocation.js";
 
-
-// 📍 Update location (called by driver)
-export const updateBusLocation = async (req, res) => {
+// ============================================================
+// ✅ SAVE LOCATION (HTTP fallback if WebSockets fail)
+// POST /api/location/update
+// ============================================================
+export const saveLocation = async (req, res) => {
     try {
-        const { busId, driverId, latitude, longitude, speed } = req.body;
+        const {
+            busId,
+            driverId,
+            latitude,
+            longitude,
+            speed,
+            heading,
+            battery
+        } = req.body;
 
-        if (!busId || !latitude || !longitude) {
-            return res.status(400).json({ message: "Missing required fields" });
-        }
-
-        const updatedLocation = await BusLocation.findOneAndUpdate(
-            { bus: busId },
-            {
-                bus: busId,
-                driver: driverId,
+        // Update Bus model with latest location
+        await Bus.findByIdAndUpdate(busId, {
+            currentLocation: {
                 latitude,
                 longitude,
                 speed,
-                timestamp: new Date(),
-                status: speed > 0 ? "moving" : "stopped"
+                heading,
+                battery,
+                lastUpdated: new Date(),
             },
-            { upsert: true, new: true }
-        );
+            trackingStatus: "online",
+        });
 
-        res.status(200).json({ success: true, data: updatedLocation });
-    } catch (err) {
-        console.error("Error updating bus location:", err);
-        res.status(500).json({ success: false, message: "Server error" });
+        // Save historical entry
+        await BusLocation.create({
+            bus: busId,
+            driver: driverId,
+            latitude,
+            longitude,
+            speed,
+            status: speed > 0 ? "moving" : "stopped",
+            timestamp: new Date(),
+        });
+
+        res.status(200).json({
+            success: true,
+            message: "Location updated successfully",
+        });
+
+    } catch (error) {
+        console.error("Save Location Error:", error);
+        res.status(500).json({ success: false, message: "Server Error" });
     }
 };
 
-
-// 🗺️ Get current location (for student or admin)
-export const getBusLocation = async (req, res) => {
+// ============================================================
+// ✅ GET LATEST BUS LOCATION
+// GET /api/location/latest/:busId
+// ============================================================
+export const getLatestLocation = async (req, res) => {
     try {
-        const { busId } = req.params;
-        const location = await BusLocation.findOne({ bus: busId });
+        const bus = await Bus.findById(req.params.busId);
 
-        if (!location) {
-            return res.status(404).json({ message: "No location found" });
-        }
+        if (!bus)
+            return res.status(404).json({ message: "Bus not found" });
 
-        res.status(200).json({ success: true, data: location });
-    } catch (err) {
-        console.error("Error fetching bus location:", err);
-        res.status(500).json({ success: false, message: "Server error" });
+        res.status(200).json({
+            success: true,
+            latest: bus.currentLocation,
+        });
+    } catch (error) {
+        console.error("Latest Location Error:", error);
+        res.status(500).json({ success: false, message: "Server Error" });
     }
 };
 
-
-export const startSharingLocation = async (req, res) => {
+// ============================================================
+// ❇️ GET FULL LOCATION HISTORY
+// GET /api/location/history/:busId
+// ============================================================
+export const getLocationHistory = async (req, res) => {
     try {
-        const { driverId, busId } = req.body;
-        if (!driverId || !busId) {
-            return res.status(400).json({ success: false, message: "driverId and busId are required" });
-        }
+        const history = await BusLocation.find({ bus: req.params.busId })
+            .sort({ timestamp: -1 });
 
-        const driver = await Driver.findById(driverId);
-        if (!driver) return res.status(404).json({ success: false, message: "Driver not found" });
-
-        const bus = await Bus.findById(busId);
-        if (!bus) return res.status(404).json({ success: false, message: "Bus not found" });
-
-        // Update DB flags
-        driver.isSharingLocation = true;
-        await driver.save();
-
-        bus.trackingStatus = "online";
-        await bus.save();
-
-        return res.status(200).json({ success: true, message: "Driver is now sharing live location" });
-    } catch (err) {
-        console.error("startSharingLocation error:", err);
-        return res.status(500).json({ success: false, message: "Server error" });
+        res.status(200).json({
+            success: true,
+            history
+        });
+    } catch (error) {
+        console.error("Location History Error:", error);
+        res.status(500).json({ success: false, message: "Server Error" });
     }
 };

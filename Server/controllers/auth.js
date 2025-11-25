@@ -1,92 +1,68 @@
+// authController.js
+
 import User from "../models/User.js";
 import Admin from "../models/Admin.js";
+import Student from "../models/Student.js";
+import Driver from "../models/Driver.js";
+
 import jwt from "jsonwebtoken";
 import bcrypt from "bcryptjs";
 
-// Signup Controller
-// export const signup = async (req, res) => {
-//     const { name, email, password, role } = req.body;
-//     try {
-//         const existingUser = await User.findOne({ email });
-//         if (existingUser)
-//             return res.status(400).json({ message: "User already exists" });
-
-//         const user = await User.create({ name, email, password, role });
-//         const token = jwt.sign(
-//             { id: user._id, role: user.role },
-//             process.env.JWT_SECRET,
-//             { expiresIn: "1d" }
-//         );
-
-//         res.status(201).json({
-//             token,
-//             user: { id: user._id, name: user.name, role: user.role },
-//         });
-//     } catch (err) {
-//         console.error("Signup Error:", err);
-//         res.status(500).json({ message: "Server error" });
-//     }
-// };
-
+// ======================================================
+// ADMIN SIGNUP (FIXED — NO DOUBLE-HASHING)
+// ======================================================
 export const signup = async (req, res) => {
-    const {
-        instituteName,
-        instituteCode,
-        email,
-        password,
-        contactNumber,
-        address,
-        city,
-        state,
-        role,
-    } = req.body;
-
     try {
-        // Check if user exists
+        const {
+            instituteName,
+            instituteCode,
+            email,
+            password,
+            contactNumber,
+            address,
+            city,
+            state,
+        } = req.body;
+
         const existingUser = await User.findOne({ email });
         if (existingUser)
             return res.status(400).json({ message: "User already exists" });
 
-        // Hash password (optional, User schema also hashes it, but safe to pre-hash for Admin)
-        const hashedPassword = await bcrypt.hash(password, 10);
+        // ❌ REMOVE MANUAL HASHING
+        // User model will hash automatically
 
-        // Create User (use instituteName as name for admins)
         const user = await User.create({
-            name: role === "admin" ? instituteName : "", // default for other roles
+            name: instituteName,
             email,
-            password: hashedPassword,
-            role,
+            password,   // RAW password → UserSchema pre("save") will hash
+            role: "admin",
         });
 
-        // If admin, create Admin document
-        let admin = null;
-        if (role === "admin") {
-            admin = await Admin.create({
-                instituteName,
-                instituteCode,
-                email,
-                password: hashedPassword, // store hashed password
-                contactNumber,
-                address,
-                city,
-                state,
-            });
-        }
+        const admin = await Admin.create({
+            userId: user._id,
+            instituteName,
+            instituteCode,
+            contactNumber,
+            address,
+            city,
+            state,
+        });
 
-        // Generate JWT
         const token = jwt.sign(
-            { id: role === "admin" ? admin._id : user._id, role },
+            { id: user._id, role: "admin" },
             process.env.JWT_SECRET,
             { expiresIn: "1d" }
         );
 
         res.status(201).json({
+            success: true,
+            message: "Admin Registered Successfully",
             token,
-            user: {
-                id: user._id,
-                name: user.name,
-                role: user.role,
-                adminId: admin?._id || null,
+            userData: {
+                userId: user._id,
+                adminId: admin._id,
+                role: "admin",
+                profile: admin,
             },
         });
     } catch (err) {
@@ -95,57 +71,100 @@ export const signup = async (req, res) => {
     }
 };
 
-
-// Login Controller
-
+// ======================================================
+// LOGIN FOR ADMIN / STUDENT / DRIVER
+// ======================================================
 export const login = async (req, res) => {
-    const { email, password } = req.body;
-
     try {
-        const user = await User.findOne({ email });
+        const { email, password } = req.body;
 
-        // Fetch admin document if this user is admin
-        let admin = null;
+        const user = await User.findOne({ email });
+        if (!user)
+            return res.status(400).json({ message: "Invalid credentials" });
+
+        let profile = null;
+        let adminId = null;
+
+        // ADMIN
         if (user.role === "admin") {
-            admin = await Admin.findOne({ email });
+            profile = await Admin.findOne({ userId: user._id });
+            adminId = profile._id;
+
+            const valid = await bcrypt.compare(password, user.password);
+            if (!valid)
+                return res.status(400).json({ message: "Invalid credentials" });
+
+            return sendLoginSuccess(res, user, profile, adminId);
         }
 
-        if (!user)
-            return res.status(400).json({ success: false, message: "Invalid credentials" });
+        // STUDENT
+        if (user.role === "student") {
+            profile = await Student.findOne({ userId: user._id });
+            if (!profile)
+                return res.status(400).json({ message: "Student profile missing" });
 
-        const isMatch = await bcrypt.compare(password, user.password);
-        if (!isMatch)
-            return res.status(400).json({ success: false, message: "Invalid credentials" });
+            const valid = await bcrypt.compare(password, user.password);
+            if (!valid)
+                return res.status(400).json({ message: "Invalid credentials" });
 
-        const token = jwt.sign(
-            { id: user.role === "admin" ? admin._id : user._id, role: user.role },
-            process.env.JWT_SECRET,
-            { expiresIn: "1d" }
-        );
+            return sendLoginSuccess(res, user, profile, null);
+        }
 
-        res.status(200).json({
-            success: true,
-            message: "Login successful",
-            token,
-            user: {
-                id: user._id,       // User table ID
-                adminId: admin?._id || null,   // IMPORTANT
-                name: user.name,
-                role: user.role
-            },
+        // DRIVER
+        if (user.role === "driver") {
+            profile = await Driver.findOne({ userId: user._id });
+            if (!profile)
+                return res.status(400).json({ message: "Driver profile missing" });
 
-        });
+            const valid = await bcrypt.compare(password, user.password);
+            if (!valid)
+                return res.status(400).json({ message: "Invalid credentials" });
+
+            return sendLoginSuccess(res, user, profile, null);
+        }
+
+        return res.status(400).json({ message: "Invalid role" });
+
     } catch (err) {
-        console.error(err);
-        res.status(500).json({ success: false, message: "Server error" });
+        console.error("Login Error:", err);
+        res.status(500).json({ message: "Server Error" });
     }
 };
 
-//logout
+// ======================================================
+// REUSABLE LOGIN RESPONSE
+// ======================================================
+const sendLoginSuccess = (res, user, profile, adminId = null) => {
+    const token = jwt.sign(
+        { id: user._id, role: user.role },
+        process.env.JWT_SECRET,
+        { expiresIn: "1d" }
+    );
 
+    res.status(200).json({
+        success: true,
+        message: "Login successful",
+        token,
+        userData: {
+            userId: user._id,
+            adminId,
+            role: user.role,
+            profile,
+        },
+    });
+};
+
+// ======================================================
+// LOGOUT
+// ======================================================
 export const logout = async (req, res) => {
     try {
-        res.clearCookie("token", { httpOnly: true, sameSite: "strict", secure: true });
+        res.clearCookie("token", {
+            httpOnly: true,
+            sameSite: "strict",
+            secure: true,
+        });
+
         res.status(200).json({ message: "Logged out successfully" });
     } catch (err) {
         console.error("Logout Error:", err);
