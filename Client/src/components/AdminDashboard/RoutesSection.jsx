@@ -171,7 +171,14 @@ export default function RoutesSection({
 
       {showForm && (
         <div className="fixed inset-0 bg-black/50 flex justify-center items-center z-50 p-4">
-          <div className="bg-white rounded-2xl p-6 w-full max-w-md shadow-lg">
+          <div className="bg-white rounded-2xl p-6 w-full max-w-md shadow-lg relative">
+            <button
+              className="absolute top-4 right-4 text-2xl"
+              onClick={() => setShowForm(false)}
+            >
+              ✕
+            </button>
+
             <h3 className="text-2xl font-bold text-center mb-4">
               {currentRoute ? "Edit Route" : "Add New Route"}
             </h3>

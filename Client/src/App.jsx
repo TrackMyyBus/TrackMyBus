@@ -3,7 +3,6 @@ import "./App.css";
 import "./index.css";
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 
-import Navbar from "./components/Navbar";
 import Home from "./Pages/Home";
 import Login from "./Pages/Login";
 import Signup from "./Pages/SignUp";
@@ -12,17 +11,43 @@ import AdminDashboard from "./Pages/AdminDashboard";
 import DriverDashboard from "./Pages/DriverDashboard";
 import StudentDashboard from "./Pages/StudentDashBoard";
 
+import PrivateRoute from "./components/PrivateRoute";
+
 export default function App() {
   return (
     <Router>
       <Routes>
+        {/* Public Routes */}
         <Route path="/" element={<Home />} />
         <Route path="/login" element={<Login />} />
         <Route path="/signup" element={<Signup />} />
         <Route path="/update-password" element={<UpdatePassword />} />
-        <Route path="/admin" element={<AdminDashboard />} />
-        <Route path="/driver" element={<DriverDashboard />} />
-        <Route path="/student" element={<StudentDashboard />} />
+
+        {/* Protected Routes */}
+        <Route
+          path="/admin"
+          element={
+            <PrivateRoute role="admin">
+              <AdminDashboard />
+            </PrivateRoute>
+          }
+        />
+        <Route
+          path="/driver"
+          element={
+            <PrivateRoute role="driver">
+              <DriverDashboard />
+            </PrivateRoute>
+          }
+        />
+        <Route
+          path="/student"
+          element={
+            <PrivateRoute role="student">
+              <StudentDashboard />
+            </PrivateRoute>
+          }
+        />
       </Routes>
     </Router>
   );

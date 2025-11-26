@@ -466,7 +466,10 @@ export default function ResponsiveTable({
       {/* Add Form Modal */}
       {showForm && (
         <div className="fixed inset-0 bg-black/40 flex justify-center items-center z-50 p-4">
-          <div className="bg-white p-6 rounded-xl shadow-xl w-full max-w-xl relative overflow-auto">
+          <div
+            className="bg-white p-6 rounded-xl shadow-xl w-full max-w-xl relative 
+     max-h-[90vh] overflow-y-auto"
+          >
             <button
               className="absolute top-4 right-4 text-xl"
               onClick={() => setShowForm(false)}
