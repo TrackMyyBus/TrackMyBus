@@ -1,26 +1,28 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
 
-/* =====================================================
-   REUSABLE SAFE SINGLE SELECT
-===================================================== */
-function SingleSelect({ label, field, options, value, setNewItem, display }) {
+function SingleSelect({
+  label,
+  field,
+  options = [],
+  value,
+  setNewItem,
+  display,
+}) {
   const safeOptions = Array.isArray(options) ? options : [];
-
   return (
     <div className="mb-3">
       <label className="block text-sm font-medium text-gray-600 mb-1">
         {label}
       </label>
-
       <select
         className="w-full border p-2 rounded-lg"
         value={value || ""}
         onChange={(e) =>
           setNewItem((prev) => ({ ...prev, [field]: e.target.value }))
-        }>
+        }
+      >
         <option value="">Select</option>
-
         {safeOptions.map((opt) => (
           <option key={opt._id} value={opt._id}>
             {display(opt)}
@@ -31,9 +33,6 @@ function SingleSelect({ label, field, options, value, setNewItem, display }) {
   );
 }
 
-/* =====================================================
-   MAIN ROUTES SECTION
-===================================================== */
 export default function RoutesSection({
   buses = [],
   drivers = [],
@@ -57,12 +56,9 @@ export default function RoutesSection({
     totalDistance: "",
     estimatedDuration: "",
     assignedBuses: [],
-    assignedDriver: "", // ⭐ REQUIRED FIELD
+    assignedDriver: "",
   });
 
-  /* =====================================================
-       FETCH ROUTES
-  ===================================================== */
   useEffect(() => {
     fetchRoutes();
   }, []);
@@ -79,9 +75,6 @@ export default function RoutesSection({
     }
   };
 
-  /* =====================================================
-       OPEN ADD FORM
-  ===================================================== */
   const openAddForm = () => {
     setCurrentRoute(null);
     setNewRoute({
@@ -97,16 +90,11 @@ export default function RoutesSection({
     setShowForm(true);
   };
 
-  /* =====================================================
-       OPEN EDIT FORM
-  ===================================================== */
   const openEditForm = (route) => {
     setCurrentRoute(route);
-
     const safeStops = Array.isArray(route?.stops)
       ? route.stops.map((s) => s?.name || "").join(", ")
       : "";
-
     setNewRoute({
       routeName: route.routeName,
       startPoint: route.startPoint,
@@ -117,16 +105,11 @@ export default function RoutesSection({
       assignedBuses: route?.assignedBuses?.map((b) => b._id) || [],
       assignedDriver: route?.assignedDriver?._id || "",
     });
-
     setShowForm(true);
   };
 
-  /* =====================================================
-       SAVE ROUTE (ADD/UPDATE)
-  ===================================================== */
   const handleSaveRoute = async (e) => {
     e.preventDefault();
-
     const stopsArray = newRoute.stops
       .split(",")
       .map((s, i) => ({
@@ -136,7 +119,6 @@ export default function RoutesSection({
         stopOrder: i + 1,
       }))
       .filter((s) => s.name);
-
     const payload = {
       routeName: newRoute.routeName,
       startPoint: newRoute.startPoint,
@@ -147,11 +129,8 @@ export default function RoutesSection({
       assignedBuses: newRoute.assignedBuses,
       institute: adminId,
     };
-
-    // ⭐ Only send driver if selected
-    if (newRoute.assignedDriver) {
+    if (newRoute.assignedDriver)
       payload.assignedDriver = newRoute.assignedDriver;
-    }
 
     try {
       if (currentRoute) {
@@ -167,7 +146,6 @@ export default function RoutesSection({
         });
         alert("Route added!");
       }
-
       setShowForm(false);
       fetchRoutes();
       if (refreshRoutes) refreshRoutes();
@@ -178,28 +156,25 @@ export default function RoutesSection({
   };
 
   return (
-    <div className="bg-gray-100 p-6 ml-16 rounded-2xl shadow-lg">
-      {/* HEADER */}
-      <div className="flex justify-between items-center mb-6">
-        <h2 className="text-3xl font-extrabold text-indigo-900">
+    <div className="w-full bg-gray-50 rounded-2xl p-4">
+      <div className="flex justify-between items-center mb-4">
+        <h2 className="text-2xl sm:text-3xl font-extrabold text-indigo-900">
           Bus Routes Overview
         </h2>
-
         <button
           onClick={openAddForm}
-          className="bg-yellow-500 text-white px-4 py-2 rounded-xl shadow-md">
+          className="bg-yellow-500 text-white px-4 py-2 rounded-xl shadow-md"
+        >
           Add Route
         </button>
       </div>
 
-      {/* FORM MODAL */}
       {showForm && (
         <div className="fixed inset-0 bg-black/50 flex justify-center items-center z-50 p-4">
           <div className="bg-white rounded-2xl p-6 w-full max-w-md shadow-lg">
             <h3 className="text-2xl font-bold text-center mb-4">
               {currentRoute ? "Edit Route" : "Add New Route"}
             </h3>
-
             <form onSubmit={handleSaveRoute} className="space-y-3">
               <input
                 type="text"
@@ -211,7 +186,6 @@ export default function RoutesSection({
                 required
                 className="w-full border p-2 rounded-lg"
               />
-
               <input
                 type="text"
                 placeholder="Start Point"
@@ -222,7 +196,6 @@ export default function RoutesSection({
                 required
                 className="w-full border p-2 rounded-lg"
               />
-
               <input
                 type="text"
                 placeholder="End Point"
@@ -233,7 +206,6 @@ export default function RoutesSection({
                 required
                 className="w-full border p-2 rounded-lg"
               />
-
               <input
                 type="number"
                 placeholder="Total Distance"
@@ -243,7 +215,6 @@ export default function RoutesSection({
                 }
                 className="w-full border p-2 rounded-lg"
               />
-
               <input
                 type="text"
                 placeholder="Estimated Duration"
@@ -256,7 +227,6 @@ export default function RoutesSection({
                 }
                 className="w-full border p-2 rounded-lg"
               />
-
               <input
                 type="text"
                 placeholder="Stops (comma separated)"
@@ -266,8 +236,6 @@ export default function RoutesSection({
                 }
                 className="w-full border p-2 rounded-lg"
               />
-
-              {/* SELECT BUS */}
               <SingleSelect
                 label="Assign Bus"
                 field="assignedBuses"
@@ -276,8 +244,6 @@ export default function RoutesSection({
                 setNewItem={setNewRoute}
                 display={(b) => `${b.busNumberPlate} (${b.busId})`}
               />
-
-              {/* SELECT DRIVER */}
               <SingleSelect
                 label="Assign Driver"
                 field="assignedDriver"
@@ -286,7 +252,6 @@ export default function RoutesSection({
                 setNewItem={setNewRoute}
                 display={(d) => `${d.driverId} - ${d.name}`}
               />
-
               <button className="w-full bg-yellow-500 text-white py-2 rounded-lg mt-2">
                 Save Route
               </button>
@@ -295,30 +260,29 @@ export default function RoutesSection({
         </div>
       )}
 
-      {/* ROUTE LIST */}
       <ul className="space-y-4">
         {routes.map((route) => (
-          <li key={route._id} className="bg-white rounded-xl shadow-md p-5">
-            <div className="flex justify-between items-center">
+          <li key={route._id} className="bg-white rounded-xl shadow-md p-4">
+            <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-3">
               <div
+                className="cursor-pointer"
                 onClick={() =>
-                  setExpanded({
-                    ...expanded,
-                    [route._id]: !expanded[route._id],
-                  })
+                  setExpanded((s) => ({ ...s, [route._id]: !s[route._id] }))
                 }
-                className="cursor-pointer">
+              >
                 <h3 className="text-lg font-semibold">{route.routeName}</h3>
                 <p className="text-sm text-gray-500">
                   {route?.stops?.length || 0} Stops
                 </p>
               </div>
-
-              <button
-                onClick={() => openEditForm(route)}
-                className="text-yellow-500 font-semibold">
-                Edit
-              </button>
+              <div className="flex items-center gap-3">
+                <button
+                  onClick={() => openEditForm(route)}
+                  className="text-yellow-500 font-semibold"
+                >
+                  Edit
+                </button>
+              </div>
             </div>
 
             {expanded[route._id] && (

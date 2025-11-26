@@ -47,42 +47,46 @@ export default function DashboardOverview({ stats, chart }) {
   ];
 
   return (
-    <div className="ml-16">
-      <div className="flex flex-col sm:flex-row justify-between items-center mb-6">
-        <h1 className="text-3xl font-extrabold text-indigo-900">
+    <div className="w-full overflow-y-auto pb-20">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
+        <h1 className="text-2xl sm:text-3xl font-extrabold text-indigo-900">
           Admin Dashboard
         </h1>
       </div>
 
-      {/* STAT CARDS */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
         {labels.map((label, i) => (
           <motion.div
             key={i}
             whileHover={{ scale: 1.03 }}
-            className="bg-white shadow rounded-xl p-6 text-center border border-gray-100">
-            <div className={`flex justify-center text-3xl mb-3 ${colors[i]}`}>
+            className="bg-white shadow rounded-xl p-5 text-center border border-gray-100"
+          >
+            <div
+              className={`flex justify-center text-2xl sm:text-3xl mb-2 ${colors[i]}`}
+            >
               {icons[i]}
             </div>
-            <div className="text-gray-600 font-medium">{label}</div>
-            <div className="text-3xl font-bold">{values[i]}</div>
+            <div className="text-gray-600 font-medium text-sm">{label}</div>
+            <div className="text-2xl sm:text-3xl font-bold mt-2">
+              {values[i]}
+            </div>
           </motion.div>
         ))}
       </div>
 
-      {/* BAR CHART */}
-      <div className="bg-white shadow rounded-xl p-6 mt-6">
+      <div className="bg-white shadow rounded-xl p-4 mt-4">
         <h2 className="text-lg font-semibold mb-4">System Overview</h2>
-
-        <ResponsiveContainer width="100%" height={320}>
-          <BarChart data={barData} barSize={55}>
-            <CartesianGrid strokeDasharray="3 3" />
-            <XAxis dataKey="name" />
-            <YAxis allowDecimals={false} />
-            <Tooltip />
-            <Bar dataKey="count" radius={[8, 8, 0, 0]} />
-          </BarChart>
-        </ResponsiveContainer>
+        <div style={{ width: "100%", height: 320 }}>
+          <ResponsiveContainer width="100%" height="100%">
+            <BarChart data={barData}>
+              <CartesianGrid strokeDasharray="3 3" />
+              <XAxis dataKey="name" />
+              <YAxis allowDecimals={false} />
+              <Tooltip />
+              <Bar dataKey="count" radius={[8, 8, 0, 0]} />
+            </BarChart>
+          </ResponsiveContainer>
+        </div>
       </div>
     </div>
   );

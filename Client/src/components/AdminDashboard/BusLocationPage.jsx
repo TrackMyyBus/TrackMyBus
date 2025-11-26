@@ -16,7 +16,7 @@ L.Icon.Default.mergeOptions({
     "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png",
 });
 
-export default function BusLocationPage({ sidebarOpen }) {
+export default function BusLocationPage() {
   const [buses, setBuses] = useState([]);
   const [search, setSearch] = useState("");
   const socketRef = useRef(null);
@@ -28,8 +28,6 @@ export default function BusLocationPage({ sidebarOpen }) {
   };
 
   useEffect(() => {
-    console.log("🔌 Initializing Socket...");
-
     const socket = io("http://localhost:5000", {
       transports: ["polling", "websocket"],
       reconnectionAttempts: 10,
@@ -39,33 +37,19 @@ export default function BusLocationPage({ sidebarOpen }) {
 
     socketRef.current = socket;
 
-    socket.on("connect", () => console.log("🟢 Socket connected:", socket.id));
-    socket.on("disconnect", () => console.log("🔴 Socket disconnected"));
-
-    // REAL ADMIN ID
     const adminId = localStorage.getItem("adminId");
-
     if (!adminId) {
-      console.error("❌ No adminId found in localStorage!");
+      console.error("No adminId found!");
       return;
     }
 
-    // FETCH BUSES
     (async () => {
       try {
         const res = await fetch(`http://localhost:5000/api/bus/all/${adminId}`);
         const raw = await res.json();
-
-        if (!raw.success || !Array.isArray(raw.buses)) {
-          console.warn("⚠ No buses found:", raw);
-          return;
-        }
-
-        const list = raw.buses;
-
-        const normalized = list.map((b) => {
+        if (!raw.success || !Array.isArray(raw.buses)) return;
+        const normalized = raw.buses.map((b) => {
           const loc = b.currentLocation || {};
-
           return {
             id: b._id,
             name: b.busId || b.busNumberPlate || "Bus",
@@ -74,10 +58,7 @@ export default function BusLocationPage({ sidebarOpen }) {
             raw: b,
           };
         });
-
         setBuses(normalized);
-
-        // SOCKET LISTENERS
         normalized.forEach((bus) => {
           socket.on(`bus-${bus.id}-location`, (payload) => {
             if (!payload) return;
@@ -89,14 +70,11 @@ export default function BusLocationPage({ sidebarOpen }) {
           });
         });
       } catch (err) {
-        console.error("❌ Error fetching buses:", err);
+        console.error("Error fetching buses:", err);
       }
     })();
 
-    return () => {
-      console.log("🧹 Cleaning up socket...");
-      socket.disconnect();
-    };
+    return () => socket.disconnect();
   }, []);
 
   const filteredBuses = buses.filter((b) =>
@@ -104,19 +82,18 @@ export default function BusLocationPage({ sidebarOpen }) {
   );
 
   return (
-    <div
-      className="p-4 flex flex-col h-[100vh]"
-      style={{ marginLeft: sidebarOpen ? "16rem" : "4rem" }}>
-      <h2 className="text-3xl font-extrabold text-indigo-900 mb-3">
+    <div className="w-full flex flex-col h-[75vh] sm:h-[80vh]">
+      <h2 className="text-2xl sm:text-3xl font-extrabold text-indigo-900 mb-3">
         🗺️ Live Bus Locations
       </h2>
 
-      <Input
-        placeholder="Search Bus ID..."
-        value={search}
-        onChange={(e) => setSearch(e.target.value)}
-        className="mb-4 w-full md:w-1/3"
-      />
+      <div className="mb-3 w-full sm:w-1/2 lg:w-1/3">
+        <Input
+          placeholder="Search Bus ID..."
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+        />
+      </div>
 
       <div className="flex-1 rounded-lg overflow-hidden shadow-lg border">
         <MapContainer
@@ -125,12 +102,12 @@ export default function BusLocationPage({ sidebarOpen }) {
             filteredBuses[0]?.lng ?? 75.8036,
           ]}
           zoom={12}
-          style={{ height: "96%", width: "96%", margin: "20px" }}>
+          className="w-full h-full"
+        >
           <TileLayer
             url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
             attribution="© OpenStreetMap contributors"
           />
-
           {filteredBuses.map((bus) => (
             <Marker key={bus.id} position={[bus.lat, bus.lng]}>
               <Popup>

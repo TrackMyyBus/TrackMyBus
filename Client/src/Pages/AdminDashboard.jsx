@@ -13,28 +13,23 @@ import useAdminData from "@/hooks/useAdminData";
 export default function AdminDashboard() {
   const { user } = useContext(AuthContext);
 
-  /* --------------------------------------------------
-   * 1. Extract adminId safely (3 fallback layers)
-   * -------------------------------------------------- */
   const adminId =
     user?.adminId || localStorage.getItem("adminId") || user?._id || null;
 
   const token = localStorage.getItem("token");
 
-  /* --------------------------------------------------
-   * 2. Active Tab (saved in localStorage)
-   * -------------------------------------------------- */
   const [activeTab, setActiveTab] = useState(
     localStorage.getItem("activeTab") || "dashboard"
   );
-
   useEffect(() => {
     localStorage.setItem("activeTab", activeTab);
   }, [activeTab]);
 
-  /* --------------------------------------------------
-   * 3. Fetch all dashboard data
-   * -------------------------------------------------- */
+  // sidebar state centralised
+  const [sidebarOpen, setSidebarOpen] = useState(
+    JSON.parse(localStorage.getItem("sidebarOpen")) ?? true
+  );
+
   const { loading, overview, students, drivers, buses, routes, refreshAll } =
     useAdminData(adminId, token);
 
@@ -53,20 +48,24 @@ export default function AdminDashboard() {
       </div>
     );
 
-  return (
-    <div className="flex min-h-screen bg-gray-100">
-      {/* ----------------------------------------- */}
-      {/* Sidebar */}
-      {/* ----------------------------------------- */}
-      <Sidebar activeTab={activeTab} setActiveTab={setActiveTab} />
+  // main margin adjusts with sidebar and is responsive
+  const mainClass = `
+  flex-1 transition-all duration-300 min-h-screen 
+  p-4 md:p-6 
+  pl-14   /* <-- This fixes mobile heading shift */
+  ${sidebarOpen ? "sm:ml-72 md:ml-64" : "sm:ml-16 md:ml-16"}
+`;
 
-      {/* ----------------------------------------- */}
-      {/* MAIN CONTENT */}
-      {/* ----------------------------------------- */}
-      <main className="flex-1 p-4 md:p-6 ml-16">
-        {/* ----------------------------------------- */}
-        {/* TAB: Dashboard Overview */}
-        {/* ----------------------------------------- */}
+  return (
+    <div className="flex bg-gray-100">
+      <Sidebar
+        activeTab={activeTab}
+        setActiveTab={setActiveTab}
+        sidebarOpen={sidebarOpen}
+        setSidebarOpen={setSidebarOpen}
+      />
+
+      <main className={mainClass}>
         {activeTab === "dashboard" && (
           <DashboardOverview
             stats={{
@@ -84,9 +83,6 @@ export default function AdminDashboard() {
           />
         )}
 
-        {/* ----------------------------------------- */}
-        {/* TAB: Students */}
-        {/* ----------------------------------------- */}
         {activeTab === "students" && (
           <ResponsiveTable
             type="Student"
@@ -98,9 +94,6 @@ export default function AdminDashboard() {
           />
         )}
 
-        {/* ----------------------------------------- */}
-        {/* TAB: Drivers */}
-        {/* ----------------------------------------- */}
         {activeTab === "drivers" && (
           <ResponsiveTable
             type="Driver"
@@ -112,9 +105,6 @@ export default function AdminDashboard() {
           />
         )}
 
-        {/* ----------------------------------------- */}
-        {/* TAB: Buses */}
-        {/* ----------------------------------------- */}
         {activeTab === "buses" && (
           <ResponsiveTable
             type="Bus"
@@ -126,9 +116,6 @@ export default function AdminDashboard() {
           />
         )}
 
-        {/* ----------------------------------------- */}
-        {/* TAB: Routes */}
-        {/* ----------------------------------------- */}
         {activeTab === "routes" && (
           <RoutesSection
             buses={buses}
@@ -137,21 +124,10 @@ export default function AdminDashboard() {
           />
         )}
 
-        {/* ----------------------------------------- */}
-        {/* TAB: Notifications */}
-        {/* ----------------------------------------- */}
-        {activeTab === "notifications" && (
-          <NotificationsSection adminId={adminId} />
-        )}
+        {activeTab === "notifications" && <NotificationsSection />}
 
-        {/* ----------------------------------------- */}
-        {/* TAB: Chat */}
-        {/* ----------------------------------------- */}
-        {activeTab === "chat" && <ChatSection adminId={adminId} />}
+        {activeTab === "chat" && <ChatSection />}
 
-        {/* ----------------------------------------- */}
-        {/* TAB: Live Bus Locations */}
-        {/* ----------------------------------------- */}
         {activeTab === "busLocations" && <BusLocationPage />}
       </main>
     </div>

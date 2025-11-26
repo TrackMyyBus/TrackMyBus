@@ -1,4 +1,3 @@
-// ResponsiveTable.jsx
 import React, { useState, useEffect } from "react";
 import { FaSearch, FaPlus, FaTrash, FaSave } from "react-icons/fa";
 import axios from "axios";
@@ -20,7 +19,6 @@ export default function ResponsiveTable({
 
   const token = localStorage.getItem("token");
   const adminId = localStorage.getItem("adminId");
-
   const normalizedType = type.toLowerCase();
   const formattedType = type[0].toUpperCase() + type.slice(1);
 
@@ -35,24 +33,16 @@ export default function ResponsiveTable({
   };
   const apiPrefix = API_PREFIX_MAP[normalizedType];
 
-  /* ============================================================
-      ADD NEW
-  ============================================================ */
   const handleAddNew = async (e) => {
     e.preventDefault();
     if (!adminId) return alert("Admin ID missing!");
-
     let payload = { ...newItem, institute: adminId };
-
-    if (normalizedType === "driver") {
+    if (normalizedType === "driver")
       payload.password = newItem.password || newItem.driverId;
-    }
-
     try {
       await axios.post(`http://localhost:5000${apiPrefix}/create`, payload, {
         headers: { Authorization: `Bearer ${token}` },
       });
-
       setShowForm(false);
       setNewItem({});
       refreshData();
@@ -63,12 +53,8 @@ export default function ResponsiveTable({
     }
   };
 
-  /* ============================================================
-      UPDATE — FIXED WITH ASSIGN LOGIC
-  ============================================================ */
   const handleUpdate = async () => {
     try {
-      /* 🎯 STUDENT ASSIGNMENT */
       if (normalizedType === "student") {
         await axios.put(
           `http://localhost:5000/api/students/assign/${selectedItem._id}`,
@@ -78,14 +64,12 @@ export default function ResponsiveTable({
           },
           { headers: { Authorization: `Bearer ${token}` } }
         );
-
         alert("Student updated (Bus & Route Assigned)");
         setShowDrawer(false);
         refreshData();
         return;
       }
 
-      /* 🎯 DRIVER ASSIGNMENT */
       if (normalizedType === "driver") {
         await axios.put(
           `http://localhost:5000/api/drivers/assign/${selectedItem._id}`,
@@ -95,18 +79,14 @@ export default function ResponsiveTable({
           },
           { headers: { Authorization: `Bearer ${token}` } }
         );
-
         alert("Driver updated (Bus & Route Assigned)");
         setShowDrawer(false);
         refreshData();
         return;
       }
 
-      /* 🎯 BUS ASSIGNMENT */
       if (normalizedType === "bus") {
         const busId = selectedItem._id;
-
-        // Assign DRIVER to bus
         if (selectedItem.assignedDriver) {
           await axios.put(
             `http://localhost:5000/api/bus/assign-driver/${busId}`,
@@ -114,8 +94,6 @@ export default function ResponsiveTable({
             { headers: { Authorization: `Bearer ${token}` } }
           );
         }
-
-        // Assign ROUTE to bus
         if (selectedItem.assignedRoute) {
           await axios.put(
             `http://localhost:5000/api/bus/assign-route/${busId}`,
@@ -123,20 +101,19 @@ export default function ResponsiveTable({
             { headers: { Authorization: `Bearer ${token}` } }
           );
         }
-
         alert("Bus updated (Driver/Route assigned)");
         setShowDrawer(false);
         refreshData();
         return;
       }
 
-      /* DEFAULT UPDATE */
       await axios.put(
         `http://localhost:5000${apiPrefix}/update/${selectedItem._id}`,
         selectedItem,
-        { headers: { Authorization: `Bearer ${token}` } }
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
       );
-
       alert(`${formattedType} updated!`);
       setShowDrawer(false);
       refreshData();
@@ -146,12 +123,8 @@ export default function ResponsiveTable({
     }
   };
 
-  /* ============================================================
-      DELETE
-  ============================================================ */
   const deleteItem = async (id) => {
     if (!window.confirm("Delete this record?")) return;
-
     try {
       await axios.delete(`http://localhost:5000${apiPrefix}/delete/${id}`, {
         headers: { Authorization: `Bearer ${token}` },
@@ -168,9 +141,6 @@ export default function ResponsiveTable({
     JSON.stringify(item).toLowerCase().includes(search.toLowerCase())
   );
 
-  /* ============================================================
-      DRAWER SUPPORT COMPONENTS
-  ============================================================ */
   const DrawerField = ({ label, field, disabled = false, type = "text" }) => (
     <div>
       <label className="text-sm text-gray-600">{label}</label>
@@ -196,11 +166,12 @@ export default function ResponsiveTable({
         value={selectedItem?.[field] || ""}
         onChange={(e) =>
           setSelectedItem((prev) => ({ ...prev, [field]: e.target.value }))
-        }>
+        }
+      >
         <option value="">Select</option>
         {options.map((opt) => (
           <option key={opt._id} value={opt._id}>
-            {opt.busId || opt.driverId || opt.routeName}
+            {opt.busId || opt.driverId || opt.routeName || opt.name}
           </option>
         ))}
       </select>
@@ -208,99 +179,103 @@ export default function ResponsiveTable({
   );
 
   const renderFormFields = (normalizedType) => {
+    // keep same fields - simplified Input/Select usage
     switch (normalizedType) {
       case "student":
         return (
           <>
-            <Input label="Name" field="name" setNewItem={setNewItem} />
-            <Input label="Email" field="email" setNewItem={setNewItem} />
-            <Input
+            <FormInput label="Name" field="name" setNewItem={setNewItem} />
+            <FormInput label="Email" field="email" setNewItem={setNewItem} />
+            <FormInput
               label="Enrollment ID"
               field="enrollmentId"
               setNewItem={setNewItem}
             />
-            <Input
+            <FormInput
               label="Enrollment Year"
-              type="number"
               field="enrollmentYear"
+              type="number"
               setNewItem={setNewItem}
             />
-            <Input
+            <FormInput
               label="Contact Number"
               field="contactNumber"
               setNewItem={setNewItem}
             />
-            <Input label="Address" field="address" setNewItem={setNewItem} />
-
-            <Select
+            <FormInput
+              label="Address"
+              field="address"
+              setNewItem={setNewItem}
+            />
+            <FormSelect
               label="Assigned Bus"
               field="assignedBus"
               options={buses}
               setNewItem={setNewItem}
-              display={(opt) => opt.busId}
+              display={(o) => o.busId || o.busNumberPlate}
             />
-            <Select
+            <FormSelect
               label="Assigned Route"
               field="assignedRoute"
               options={routes}
               setNewItem={setNewItem}
-              display={(opt) => opt.routeName}
+              display={(o) => o.routeName}
             />
           </>
         );
-
       case "driver":
         return (
           <>
-            <Input label="Name" field="name" setNewItem={setNewItem} />
-            <Input label="Email" field="email" setNewItem={setNewItem} />
-            <Input label="Driver ID" field="driverId" setNewItem={setNewItem} />
-            <Input
+            <FormInput label="Name" field="name" setNewItem={setNewItem} />
+            <FormInput label="Email" field="email" setNewItem={setNewItem} />
+            <FormInput
+              label="Driver ID"
+              field="driverId"
+              setNewItem={setNewItem}
+            />
+            <FormInput
               label="Contact Number"
               field="contactNumber"
               setNewItem={setNewItem}
             />
-
-            <Select
+            <FormSelect
               label="Assigned Bus"
               field="assignedBus"
               options={buses}
               setNewItem={setNewItem}
-              display={(opt) => opt.busId}
+              display={(o) => o.busId || o.busNumberPlate}
             />
-            <Select
+            <FormSelect
               label="Assigned Route"
               field="assignedRoute"
               options={routes}
               setNewItem={setNewItem}
-              display={(opt) => opt.routeName}
+              display={(o) => o.routeName}
             />
           </>
         );
-
       case "bus":
         return (
           <>
-            <Input label="Bus ID" field="busId" setNewItem={setNewItem} />
-            <Input
+            <FormInput label="Bus ID" field="busId" setNewItem={setNewItem} />
+            <FormInput
               label="Bus Number Plate"
               field="busNumberPlate"
               setNewItem={setNewItem}
             />
-
-            <Select
+            <FormSelect
               label="Assigned Driver"
               field="assignedDriver"
               options={drivers}
               setNewItem={setNewItem}
-              display={(opt) => opt.driverId}
+              display={(o) => o.driverId || o.name}
             />
-            <Select
+            <FormSelect
               label="Assigned Route"
               field="assignedRoute"
               options={routes}
               setNewItem={setNewItem}
-              display={(opt) => opt.routeName}
+              display={(o) => o.routeName}
             />
           </>
         );
@@ -309,53 +284,46 @@ export default function ResponsiveTable({
     }
   };
 
-  /* ============================================================
-      CARD LABEL HELPERS
-  ============================================================ */
   const getAssignedBus = (item) =>
     item.assignedBus?.busId ||
     buses.find((b) => b._id === item.assignedBus)?.busId ||
     "N/A";
-
   const getAssignedRoute = (item) =>
     item.assignedRoute?.routeName ||
     routes.find((r) => r._id === item.assignedRoute)?.routeName ||
     "N/A";
-
   const getAssignedDriver = (item) =>
     item.assignedDriver?.driverId ||
     drivers.find((d) => d._id === item.assignedDriver)?.driverId ||
     "N/A";
 
-  /* ============================================================
-      RENDER UI
-  ============================================================ */
   return (
-    <div className="w-[80%] ml-16 p-4">
-      {/* HEADER */}
-      <div className="flex justify-between items-center mb-4">
-        <h2 className="text-3xl font-bold text-indigo-900">{formattedType}s</h2>
+    <div className="w-full">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 gap-3">
+        <h2 className="text-2xl sm:text-3xl font-bold text-indigo-900">
+          {formattedType}s
+        </h2>
+        <div className="flex items-center gap-3 w-full sm:w-auto">
+          <div className="relative w-full sm:w-64">
+            <FaSearch className="absolute left-3 top-3 text-gray-400" />
+            <input
+              type="text"
+              placeholder="Search..."
+              className="pl-10 pr-4 py-2 w-full border rounded-xl shadow-sm"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+            />
+          </div>
 
-        <button
-          onClick={() => setShowForm(true)}
-          className="bg-yellow-500 text-white px-4 py-2 rounded-xl flex gap-2">
-          <FaPlus /> Add {formattedType}
-        </button>
+          <button
+            onClick={() => setShowForm(true)}
+            className="bg-yellow-500 text-white px-4 py-2 rounded-xl flex gap-2"
+          >
+            <FaPlus /> Add {formattedType}
+          </button>
+        </div>
       </div>
 
-      {/* SEARCH */}
-      <div className="relative mb-4 max-w-md">
-        <FaSearch className="absolute ml-3 mt-3 text-gray-400" />
-        <input
-          type="text"
-          placeholder="Search..."
-          className="pl-10 pr-4 py-2 w-full border rounded-xl shadow-sm"
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-        />
-      </div>
-
-      {/* CARDS */}
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
         {filteredItems.map((item) => (
           <div
@@ -364,11 +332,11 @@ export default function ResponsiveTable({
               setSelectedItem(item);
               setShowDrawer(true);
             }}
-            className="cursor-pointer border shadow-md rounded-xl p-4 bg-white hover:shadow-lg transition">
-            <h3 className="text-xl font-semibold text-indigo-800">
+            className="cursor-pointer border shadow-sm rounded-xl p-4 bg-white hover:shadow-lg transition"
+          >
+            <h3 className="text-lg font-semibold text-indigo-800">
               {item.name || item.driverId || item.busId}
             </h3>
-
             <p className="text-sm text-gray-600">
               {item.enrollmentId || item.driverId || item.busNumberPlate}
             </p>
@@ -398,16 +366,16 @@ export default function ResponsiveTable({
         ))}
       </div>
 
-      {/* DRAWER */}
+      {/* Drawer */}
       {showDrawer && selectedItem && (
-        <div className="fixed inset-0 flex justify-end bg-black/30">
-          <div className="w-[380px] bg-white h-full shadow-xl p-6 overflow-y-auto relative">
+        <div className="fixed inset-0 flex justify-end z-50 bg-black/30">
+          <div className="w-full max-w-xs sm:max-w-md md:max-w-lg bg-white h-full shadow-xl p-6 overflow-y-auto">
             <button
               className="absolute top-4 right-4 text-2xl"
-              onClick={() => setShowDrawer(false)}>
+              onClick={() => setShowDrawer(false)}
+            >
               ✕
             </button>
-
             <h2 className="text-2xl font-semibold mb-4">
               Edit {formattedType}
             </h2>
@@ -480,13 +448,14 @@ export default function ResponsiveTable({
             <div className="mt-6 flex gap-3">
               <button
                 className="bg-yellow-500 text-white px-4 py-2 rounded-lg w-full"
-                onClick={handleUpdate}>
+                onClick={handleUpdate}
+              >
                 <FaSave className="inline mr-1" /> Save
               </button>
-
               <button
                 className="bg-red-500 text-white px-4 py-2 rounded-lg w-full"
-                onClick={() => deleteItem(selectedItem._id)}>
+                onClick={() => deleteItem(selectedItem._id)}
+              >
                 <FaTrash className="inline mr-1" /> Delete
               </button>
             </div>
@@ -494,24 +463,22 @@ export default function ResponsiveTable({
         </div>
       )}
 
-      {/* ADD FORM */}
+      {/* Add Form Modal */}
       {showForm && (
-        <div className="fixed inset-0 bg-black/40 flex justify-center items-center">
-          <div className="bg-white p-6 rounded-xl shadow-xl w-[450px] relative">
+        <div className="fixed inset-0 bg-black/40 flex justify-center items-center z-50 p-4">
+          <div className="bg-white p-6 rounded-xl shadow-xl w-full max-w-xl relative overflow-auto">
             <button
               className="absolute top-4 right-4 text-xl"
-              onClick={() => setShowForm(false)}>
+              onClick={() => setShowForm(false)}
+            >
               ✕
             </button>
-
             <h2 className="text-2xl font-semibold mb-4">
               Add New {formattedType}
             </h2>
-
             <form className="space-y-4" onSubmit={handleAddNew}>
               {renderFormFields(normalizedType)}
-
-              <button className="bg-yellow-500 text-white w-full py-2 rounded-lg mt-4">
+              <button className="bg-yellow-500 text-white w-full py-2 rounded-lg mt-2">
                 Save
               </button>
             </form>
@@ -522,13 +489,11 @@ export default function ResponsiveTable({
   );
 }
 
-/* ============================================================
-      INPUT COMPONENT
-============================================================ */
-function Input({ label, field, type = "text", setNewItem }) {
+/* Small helpers */
+function FormInput({ label, field, type = "text", setNewItem }) {
   return (
     <div>
-      <label className="text-sm">{label}</label>
+      <label className="text-sm block text-gray-700 mb-1">{label}</label>
       <input
         type={type}
         className="w-full border p-2 rounded-lg"
@@ -540,20 +505,25 @@ function Input({ label, field, type = "text", setNewItem }) {
   );
 }
 
-/* ============================================================
-      SELECT COMPONENT
-============================================================ */
-function Select({ label, field, options, setNewItem, display }) {
+function FormSelect({
+  label,
+  field,
+  options = [],
+  setNewItem,
+  display = (o) => o.name,
+}) {
+  const safe = Array.isArray(options) ? options : [];
   return (
     <div>
-      <label className="text-sm">{label}</label>
+      <label className="text-sm block text-gray-700 mb-1">{label}</label>
       <select
         className="w-full border p-2 rounded-lg"
         onChange={(e) =>
           setNewItem((prev) => ({ ...prev, [field]: e.target.value }))
-        }>
+        }
+      >
         <option value="">Select</option>
-        {options.map((opt) => (
+        {safe.map((opt) => (
           <option key={opt._id} value={opt._id}>
             {display(opt)}
           </option>
