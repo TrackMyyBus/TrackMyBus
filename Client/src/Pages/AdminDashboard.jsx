@@ -10,7 +10,12 @@ import BusLocationPage from "@/components/AdminDashboard/BusLocationPage";
 import { AuthContext } from "../contexts/AuthContext";
 import useAdminData from "@/hooks/useAdminData";
 
+import { useNavigate } from "react-router-dom";
+
 export default function AdminDashboard() {
+  // ⭐ FIX: useNavigate MUST be inside component
+  const navigate = useNavigate();
+
   const { user } = useContext(AuthContext);
 
   const adminId =
@@ -21,11 +26,11 @@ export default function AdminDashboard() {
   const [activeTab, setActiveTab] = useState(
     localStorage.getItem("activeTab") || "dashboard"
   );
+
   useEffect(() => {
     localStorage.setItem("activeTab", activeTab);
   }, [activeTab]);
 
-  // sidebar state centralised
   const [sidebarOpen, setSidebarOpen] = useState(
     JSON.parse(localStorage.getItem("sidebarOpen")) ?? true
   );
@@ -48,13 +53,12 @@ export default function AdminDashboard() {
       </div>
     );
 
-  // main margin adjusts with sidebar and is responsive
   const mainClass = `
-  flex-1 transition-all duration-300 min-h-screen 
-  p-4 md:p-6 
-  pl-14   /* <-- This fixes mobile heading shift */
-  ${sidebarOpen ? "sm:ml-72 md:ml-64" : "sm:ml-16 md:ml-16"}
-`;
+    flex-1 transition-all duration-300 min-h-screen 
+    p-4 md:p-6 
+    pl-14
+    ${sidebarOpen ? "sm:ml-72 md:ml-64" : "sm:ml-16 md:ml-16"}
+  `;
 
   return (
     <div className="flex bg-gray-100">
@@ -64,6 +68,14 @@ export default function AdminDashboard() {
         sidebarOpen={sidebarOpen}
         setSidebarOpen={setSidebarOpen}
       />
+
+      {/* Chat Button (you can keep or move it to Sidebar) */}
+      <button
+        onClick={() => navigate("/chat")}
+        className="px-4 py-2 bg-blue-600 text-white rounded absolute right-4 top-4"
+      >
+        Open Chat
+      </button>
 
       <main className={mainClass}>
         {activeTab === "dashboard" && (

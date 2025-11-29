@@ -3,20 +3,22 @@ import React from "react";
 import { Navigate } from "react-router-dom";
 
 export default function PrivateRoute({ children, role }) {
-  // Example: check if user is logged in and their role
-  const token = localStorage.getItem("token"); // your auth token
-  const userRole = localStorage.getItem("role"); // e.g., "admin", "driver", "student"
+  const token = localStorage.getItem("token");
+  const userRole = localStorage.getItem("role");
 
   if (!token) {
-    // Not logged in → redirect to login
     return <Navigate to="/login" replace />;
   }
 
-  if (role && userRole !== role) {
-    // Logged in but role doesn't match → redirect to home or error page
-    return <Navigate to="/" replace />;
+  // ⭐ MULTIPLE ROLE SUPPORT
+  // role can be: "admin" OR "admin,driver,student"
+  if (role) {
+    const allowedRoles = role.split(",").map((r) => r.trim());
+
+    if (!allowedRoles.includes(userRole)) {
+      return <Navigate to="/" replace />;
+    }
   }
 
-  // Logged in & role matches → render the children
   return children;
 }

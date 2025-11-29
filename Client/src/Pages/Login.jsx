@@ -26,13 +26,23 @@ export default function Login() {
       // ⭐ Correct destructure
       const { userData, token } = res.data;
 
-      // Save in AuthContext
+      // Save to localStorage (required for PrivateRoute)
+      localStorage.setItem("token", token);
+      localStorage.setItem("role", userData.role);
+      localStorage.setItem("userId", userData.userId);
+
+      // save busId for drivers/students
+      if (userData.role === "driver" || userData.role === "student") {
+        localStorage.setItem("busId", userData.profile.busId || "");
+      }
+
+      // Save in AuthContext (optional)
       loginUser(
         {
           userId: userData.userId,
           role: userData.role,
           profile: userData.profile,
-          adminId: userData.adminId, // ⭐ WORKING NOW
+          adminId: userData.adminId,
         },
         token
       );
@@ -55,7 +65,8 @@ export default function Login() {
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.6 }}
-        className="bg-white rounded-3xl shadow-xl p-10 w-full max-w-md">
+        className="bg-white rounded-3xl shadow-xl p-10 w-full max-w-md"
+      >
         <h2 className="text-2xl font-extrabold text-indigo-900 mb-6 text-center">
           Login
         </h2>
@@ -83,7 +94,8 @@ export default function Login() {
 
           <button
             type="submit"
-            className="w-full py-2 rounded-lg bg-yellow-500 hover:bg-yellow-600 text-white font-medium">
+            className="w-full py-2 rounded-lg bg-yellow-500 hover:bg-yellow-600 text-white font-medium"
+          >
             Login
           </button>
         </form>
@@ -91,7 +103,8 @@ export default function Login() {
         <div className="flex justify-between mt-4 text-sm text-slate-600">
           <Link
             to="/update-password"
-            className="text-yellow-500 hover:underline">
+            className="text-yellow-500 hover:underline"
+          >
             Forgot Password?
           </Link>
 

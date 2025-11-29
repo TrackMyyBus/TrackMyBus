@@ -1,10 +1,11 @@
 // src/components/ChatPage.jsx
 import React, { useEffect, useState } from "react";
-import jwtDecode from "jwt-decode";
+import { jwtDecode } from "jwt-decode";
+
 import { useSocket } from "../hooks/useSocket";
 import ChatBox from "./ChatBox";
 
-const SERVER = process.env.REACT_APP_API_URL || "http://localhost:5000";
+const SERVER = import.meta.env.VITE_API_URL || "http://localhost:5000";
 
 export default function ChatPage() {
   const token = localStorage.getItem("token");

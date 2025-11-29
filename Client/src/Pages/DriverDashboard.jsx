@@ -1,3 +1,5 @@
+// DriverDashboard.jsx
+
 import React, { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
@@ -6,6 +8,7 @@ import { Progress } from "@/components/ui/progress";
 import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
 import { useNavigate } from "react-router-dom";
+
 import {
   FaBell,
   FaRoute,
@@ -37,9 +40,7 @@ export default function DriverDashboard() {
   const user = JSON.parse(localStorage.getItem("user"));
   const driverUserId = user?.userId;
 
-  // ----------------------------------------
   // LOGOUT
-  // ----------------------------------------
   const handleLogout = () => {
     localStorage.removeItem("token");
     localStorage.removeItem("user");
@@ -47,9 +48,7 @@ export default function DriverDashboard() {
     navigate("/");
   };
 
-  // ----------------------------------------
-  // FETCH REAL DRIVER DASHBOARD DATA
-  // ----------------------------------------
+  // FETCH DRIVER DASHBOARD DATA
   useEffect(() => {
     if (!driverUserId) return;
 
@@ -73,9 +72,7 @@ export default function DriverDashboard() {
     loadDashboard();
   }, [driverUserId]);
 
-  // ----------------------------------------
   // TRIP CONTROL
-  // ----------------------------------------
   const handleTripToggle = () => {
     if (!tripStarted) {
       setTripStarted(true);
@@ -98,9 +95,7 @@ export default function DriverDashboard() {
     }, 1000);
   };
 
-  // ----------------------------------------
-  // Notify backend when driver starts sharing
-  // ----------------------------------------
+  // LIVE GPS SHARING
   const notifyBackendStartSharing = async () => {
     try {
       await fetch("http://localhost:5000/api/bus-location/start", {
@@ -113,9 +108,6 @@ export default function DriverDashboard() {
     }
   };
 
-  // ----------------------------------------
-  // GPS LIVE LOCATION SHARING
-  // ----------------------------------------
   const startSharingLocation = () => {
     if ("geolocation" in navigator) {
       const id = navigator.geolocation.watchPosition(
@@ -158,43 +150,55 @@ export default function DriverDashboard() {
     if (!tripStarted) stopSharingLocation();
   }, [tripStarted]);
 
-  // ----------------------------------------
   // UI
-  // ----------------------------------------
   return (
-    <div className="min-h-screen bg-gradient-to-br from-yellow-50 to-white p-6 sm:p-8">
-      {/* Header */}
-      <div className="flex items-center justify-between mb-6">
-        <h1 className="text-3xl font-extrabold text-indigo-900">
+    <div className="h-auto min-h-screen bg-gradient-to-br from-yellow-50 to-white px-3 py-4 sm:px-6 sm:py-8 pb-40 overflow-y-visible">
+      {/* HEADER */}
+      <div className="flex items-center justify-between mb-6 relative">
+        <h1 className="text-2xl sm:text-3xl font-extrabold text-indigo-900">
           Driver Dashboard
         </h1>
 
-        <div className="relative">
+        <div className="flex items-center gap-2">
+          {/* OPEN CHAT BUTTON */}
           <button
-            onClick={() => setIsMenuOpen(!isMenuOpen)}
-            className="p-2 rounded-full hover:bg-indigo-100 transition">
-            <FaCog className="text-indigo-900 text-2xl" />
+            onClick={() => navigate("/chat")}
+            className="px-3 py-2 bg-indigo-900 text-white rounded"
+          >
+            Open Chat
           </button>
 
-          {isMenuOpen && (
-            <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 z-10">
-              <button
-                onClick={() => navigate("/update-password")}
-                className="w-full flex items-center gap-2 px-4 py-2 hover:bg-indigo-50 text-indigo-800">
-                <FaKey /> Reset Password
-              </button>
-              <button
-                onClick={handleLogout}
-                className="w-full flex items-center gap-2 px-4 py-2 hover:bg-red-50 text-red-600">
-                <FaSignOutAlt /> Logout
-              </button>
-            </div>
-          )}
+          {/* SETTINGS ICON */}
+          <button
+            onClick={() => setIsMenuOpen(!isMenuOpen)}
+            className="p-2 rounded-full hover:bg-indigo-100 transition"
+          >
+            <FaCog className="text-indigo-900 text-xl sm:text-2xl" />
+          </button>
         </div>
+
+        {/* DROPDOWN MENU */}
+        {isMenuOpen && (
+          <div className="absolute right-0 top-12 w-44 bg-white rounded-lg shadow-lg border border-gray-200 z-20">
+            <button
+              onClick={() => navigate("/update-password")}
+              className="w-full flex items-center gap-2 px-4 py-2 hover:bg-indigo-50 text-indigo-800"
+            >
+              <FaKey /> Reset Password
+            </button>
+
+            <button
+              onClick={handleLogout}
+              className="w-full flex items-center gap-2 px-4 py-2 hover:bg-red-50 text-red-600"
+            >
+              <FaSignOutAlt /> Logout
+            </button>
+          </div>
+        )}
       </div>
 
       {/* GRID */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
         {/* ROUTE CARD */}
         <Card className="shadow-lg border-none">
           <CardHeader>
@@ -232,7 +236,8 @@ export default function DriverDashboard() {
               <p className="font-medium">Trip Status:</p>
               <Badge
                 variant={tripStarted ? "default" : "secondary"}
-                className={tripStarted ? "bg-green-500" : "bg-gray-400"}>
+                className={tripStarted ? "bg-green-500" : "bg-gray-400"}
+              >
                 {tripStarted ? "Ongoing" : "Not Started"}
               </Badge>
             </div>
@@ -245,7 +250,8 @@ export default function DriverDashboard() {
                 tripStarted
                   ? "bg-red-500 hover:bg-red-600"
                   : "bg-yellow-500 hover:bg-yellow-600"
-              }`}>
+              }`}
+            >
               {tripStarted ? "End Trip" : "Start Trip"}
             </Button>
 
@@ -300,7 +306,8 @@ export default function DriverDashboard() {
       <motion.div
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
-        className="mt-10 bg-indigo-50 p-4 rounded-xl flex flex-col sm:flex-row items-center justify-between shadow-md gap-2">
+        className="mt-10 bg-indigo-50 p-4 rounded-xl flex flex-col sm:flex-row items-center justify-between shadow-md gap-2"
+      >
         <div className="flex items-center gap-2 text-indigo-900 font-medium">
           <FaRegClock />
           {tripStarted ? "Trip in progress..." : "Awaiting trip start"}

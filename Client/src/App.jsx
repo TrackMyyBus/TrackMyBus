@@ -10,6 +10,7 @@ import UpdatePassword from "./Pages/UpdatePassword";
 import AdminDashboard from "./Pages/AdminDashboard";
 import DriverDashboard from "./Pages/DriverDashboard";
 import StudentDashboard from "./Pages/StudentDashBoard";
+import ChatPage from "./components/ChatPage";
 
 import PrivateRoute from "./components/PrivateRoute";
 
@@ -45,6 +46,14 @@ export default function App() {
           element={
             <PrivateRoute role="student">
               <StudentDashboard />
+            </PrivateRoute>
+          }
+        />
+        <Route
+          path="/chat"
+          element={
+            <PrivateRoute role="admin,driver,student">
+              <ChatPage />
             </PrivateRoute>
           }
         />

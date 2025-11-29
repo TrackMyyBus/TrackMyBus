@@ -1,0 +1,1 @@
+# PowerShell test file to determine AppLocker lockdown mode 183407718
