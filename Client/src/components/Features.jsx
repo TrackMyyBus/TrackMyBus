@@ -2,8 +2,9 @@
 "use client";
 
 import React from "react";
+import mapImg from "../assets/map.png";
 import { motion } from "framer-motion";
-import { MapPin, Users, Bell } from "lucide-react";
+import { MapPin, Users, Shield, Smile } from "lucide-react";
 
 export default function Features() {
   const fadeUp = {
@@ -34,21 +35,26 @@ export default function Features() {
               notifications — built for security and reliability.
             </p>
 
-            <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 mt-6">
+            <div className="grid grid-cols-2 sm:grid-cols-2 gap-4 mt-6">
               <FeatureCard
                 icon={<MapPin size={28} />}
                 title="Live Maps"
                 text="Bus position & routes"
               />
               <FeatureCard
-                icon={<Bell size={28} />}
-                title="Alerts"
-                text="Near-stop & delay notifications"
-              />
-              <FeatureCard
                 icon={<Users size={28} />}
                 title="Role Dashboards"
                 text="Admin, Driver & Student views"
+              />
+              <FeatureCard
+                icon={<Shield size={28} />}
+                title="Secure System"
+                text="Encrypted data & safe access"
+              />
+              <FeatureCard
+                icon={<Smile size={28} />}
+                title="User Friendly"
+                text="Simple and intuitive interface"
               />
             </div>
           </motion.div>
@@ -60,7 +66,7 @@ export default function Features() {
             transition={{ duration: 0.6 }}
             className="lg:col-span-7 h-[500px] rounded-2xl overflow-hidden shadow-xl bg-white">
             <img
-              src="https://i.pinimg.com/1200x/0b/8a/78/0b8a788dfe83416efe517e3ef089dea9.jpg"
+              src={mapImg}
               alt="App Preview"
               className="w-full h-full object-cover"
             />

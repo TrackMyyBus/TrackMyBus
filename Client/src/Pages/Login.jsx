@@ -1,68 +1,91 @@
-import React, { useState } from "react";
+import React, { useState, useContext } from "react";
+import axios from "axios";
+import { API_BASE_URL } from "@/config/api";
 import { motion } from "framer-motion";
-import { Link } from "react-router-dom"; // correct import
+import { Link, useNavigate } from "react-router-dom";
+import { AuthContext } from "../contexts/AuthContext";
 
 export default function Login() {
   const [form, setForm] = useState({ email: "", password: "" });
+  const navigate = useNavigate();
+  const { loginUser } = useContext(AuthContext);
 
-  const handleChange = (e) => {
+  const handleChange = (e) =>
     setForm({ ...form, [e.target.name]: e.target.value });
-  };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    // handle login API call later
-    console.log(form);
+
+    try {
+      const res = await axios.post(`${API_BASE_URL}/api/auth/login`, form);
+
+      const { userData, token } = res.data;
+
+      loginUser(
+        {
+          userId: userData.userId,
+          role: userData.role,
+          profile: userData.profile,
+          adminId: userData.adminId,
+        },
+        token
+      );
+
+      alert("Login successful!");
+
+      const role = userData.role?.toLowerCase().trim();
+
+      navigate(role === "admin" ? "/admin" : `/${role}`);
+    } catch (err) {
+      alert(err.response?.data?.message || "Login failed");
+    }
   };
 
   return (
-    <div
-      id="login"
-      className="min-h-screen flex items-center justify-center bg-gradient-to-br from-yellow-50 to-white">
-      <motion.div
-        initial={{ opacity: 0, y: -20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.6 }}
-        className="bg-white rounded-3xl shadow-xl p-10 w-full max-w-md">
-        <h2 className="text-2xl font-extrabold text-indigo-900 mb-6 text-center">
-          Login
-        </h2>
-        <form className="space-y-4" onSubmit={handleSubmit}>
+    <div className="min-h-screen flex items-center justify-center">
+      <motion.div className="bg-white p-10 rounded-3xl shadow-xl">
+        <h2 className="text-2xl font-bold mb-6 text-center">Login</h2>
+
+        <form onSubmit={handleSubmit} className="space-y-4">
           <input
-            type="text"
             name="email"
             placeholder="Email"
             value={form.email}
             onChange={handleChange}
-            className="w-full px-4 py-2 rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition"
-            required
+            className="w-full border p-2 rounded"
           />
+
           <input
-            type="password"
             name="password"
+            type="password"
             placeholder="Password"
             value={form.password}
             onChange={handleChange}
-            className="w-full px-4 py-2 rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition"
-            required
+            className="w-full border p-2 rounded"
           />
-          <button
-            type="submit"
-            className="w-full py-2 rounded-lg bg-yellow-500 hover:bg-yellow-600 text-white font-medium transition">
+
+          <button className="w-full bg-yellow-500 text-white p-2 rounded">
             Login
           </button>
-        </form>
 
-        <div className="flex justify-between mt-4 text-sm text-slate-600">
-          <Link
-            to="/update-password"
-            className="text-yellow-500 hover:underline">
-            Forgot Password?
-          </Link>
-          <Link to="/signup" className="text-yellow-500 hover:underline">
-            Sign Up
-          </Link>
-        </div>
+          <div className="mt-4 text-center space-y-2">
+            <p className="text-sm text-gray-600">
+              Forgot your password?{" "}
+              <Link
+                to="/update-password"
+                className="text-yellow-500 hover:underline">
+                Reset Password
+              </Link>
+            </p>
+
+            <p className="text-sm text-gray-600">
+              Don't have an account?{" "}
+              <Link to="/signup" className="text-yellow-500 hover:underline">
+                Sign Up
+              </Link>
+            </p>
+          </div>
+        </form>
       </motion.div>
     </div>
   );

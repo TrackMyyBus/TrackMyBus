@@ -2,7 +2,27 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
+
+  <!-- PWA Manifest -->
+  <link rel="manifest" href="/manifest.webmanifest" />
+
+  <!-- Theme color -->
+  <meta name="theme-color" content="#ffffff" />
+
+  <!-- Map CSS -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+
+  <!-- ⭐ Your original favicon (ONLY favicon) -->
   <link rel="icon" type="image/svg+xml" href="favicon.png" />
+
+  <!-- ⭐ PWA install icons (won't override favicon) -->
+  <link rel="apple-touch-icon" href="/icons/pwa-192x192.png">
+  <link rel="manifest-icon" href="/icons/pwa-192x192.png" sizes="192x192">
+  <link rel="manifest-icon" href="/icons/pwa-512x512.png" sizes="512x512">
+
+  <!-- iOS PWA support -->
+  <meta name="apple-mobile-web-app-capable" content="yes">
+
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>TrackMyBus</title>
 </head>
