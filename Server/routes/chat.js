@@ -6,45 +6,32 @@ import { protect } from "../middleware/auth.js";
 
 const router = express.Router();
 
-// Get rooms of logged-in user
-router.get("/rooms", protect, async (req, res) => {
-  try {
-    const userId = req.user._id;
+// CREATE OR FETCH ROOM SAFELY
+async function getOrCreateRoom(roomName, roomType) {
+  let room = await ChatRoom.findOne({ roomName });
 
-    const rooms = await ChatRoom.find({ members: userId }).lean();
-
-    // If user has busId → include bus room
-    if (req.user.busId) {
-      const busRoomName = `bus_${req.user.busId}`;
-      const busRoom = await ChatRoom.findOne({ roomName: busRoomName }).lean();
-      if (busRoom && !rooms.some((r) => r.roomName === busRoom.roomName)) {
-        rooms.push(busRoom);
-      }
-    }
-
-    res.json(rooms);
-  } catch (err) {
-    console.error("❌ Error fetching rooms:", err);
-    res.status(500).json({ message: "Server error" });
-  }
-});
-
-// Get message history
-router.get("/history/:roomName", protect, async (req, res) => {
-  try {
-    const { roomName } = req.params;
-    const room = await ChatRoom.findOne({ roomName });
-
-    if (!room) return res.json([]);
-
-    const msgs = await Message.find({ roomId: room._id }).sort({
-      createdAt: 1,
+  if (!room) {
+    room = await ChatRoom.create({
+      roomName,
+      roomType, // must be "direct" | "bus" | "broadcast"
+      members: [],
     });
-    res.json(msgs);
-  } catch (err) {
-    console.error("❌ Error loading messages:", err);
-    res.status(500).json({ message: "Server error" });
   }
+
+  return room;
+}
+
+// GET message history
+router.get("/history/:roomName", protect, async (req, res) => {
+  const adminId = req.user.adminId || req.user.institute;
+
+  const finalRoom = `${req.params.roomName}_${adminId}`;
+
+  const room = await ChatRoom.findOne({ roomName: finalRoom });
+  if (!room) return res.json([]);
+
+  const msgs = await Message.find({ roomId: room._id }).sort({ createdAt: 1 });
+  res.json(msgs);
 });
 
 export default router;

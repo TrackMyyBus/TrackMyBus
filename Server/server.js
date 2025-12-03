@@ -62,6 +62,40 @@ io.on("connection", async (socket) => {
     socket.user = handshakeUser;
   }
 
+  // SAFE MODE — ROLE-BASED ROOMS SETUP
+  socket.on("setup-rooms", async ({ token }) => {
+    const user = token ? await getUserFromSocketToken(token) : socket.user;
+    if (!user) return;
+
+    // ADMIN
+    if (user.role === "admin") {
+      socket.join(`admin_${user._id}`);
+      socket.join("admins_group");
+      socket.join("all_students");
+      socket.join("all_drivers");
+    }
+
+    // DRIVER
+    if (user.role === "driver") {
+      socket.join(`driver_${user._id}`);
+      if (user.busId) {
+        socket.join(`bus_${user.busId}`);
+        socket.join(`bus_students_${user.busId}`);
+      }
+    }
+
+    // STUDENT
+    if (user.role === "student") {
+      socket.join(`student_${user._id}`);
+      if (user.busId) {
+        socket.join(`bus_${user.busId}`);
+        socket.join(`bus_driver_${user.busId}`);
+      }
+    }
+
+    console.log("Safe-mode rooms prepared for:", user.role);
+  });
+
   // ------------------------------
   // DRIVER LOCATION
   // ------------------------------
@@ -128,6 +162,139 @@ io.on("connection", async (socket) => {
   // ------------------------------
   // CHAT EVENTS
   // ------------------------------
+
+  // ========================
+  // ⭐ ROLE-BASED, ADMIN-ISOLATED CHAT
+  // ========================
+  io.on("connection", async (socket) => {
+    console.log("🟢 Client connected:", socket.id);
+
+    const token = socket.handshake.auth?.token;
+    if (!token) return socket.disconnect();
+
+    let payload;
+    try {
+      payload = jwt.verify(token, process.env.JWT_SECRET);
+    } catch {
+      return socket.disconnect();
+    }
+
+    const user = await User.findById(payload.id).lean();
+    if (!user) return socket.disconnect();
+
+    socket.user = user;
+
+    // GET ADMIN ID FOR USER (used for isolation)
+    let adminId = null;
+
+    if (user.role === "admin") {
+      const admin = await Admin.findOne({ userId: user._id }).lean();
+      adminId = admin._id.toString();
+    }
+
+    if (user.role === "student") {
+      const student = await Student.findOne({ userId: user._id })
+        .populate("institute")
+        .lean();
+
+      adminId = student.institute._id.toString();
+      socket.join(`student_${user._id}_${adminId}`);
+      if (student.assignedBus)
+        socket.join(`bus_${student.assignedBus}_${adminId}`);
+    }
+
+    if (user.role === "driver") {
+      const driver = await Driver.findOne({ userId: user._id })
+        .populate("institute")
+        .lean();
+
+      adminId = driver.institute._id.toString();
+      socket.join(`driver_${user._id}_${adminId}`);
+      if (driver.assignedBus)
+        socket.join(`bus_${driver.assignedBus}_${adminId}`);
+    }
+
+    // STORE adminId on socket
+    socket.adminId = adminId;
+
+    console.log("🌟 Rooms joined:", socket.rooms);
+
+    // =============================
+    // ⭐ JOIN CHAT ROOM
+    // =============================
+    socket.on("chat-join", async ({ roomName, roomType }) => {
+      if (!socket.adminId) return;
+
+      // ALWAYS attach adminId
+      const finalRoom = `${roomName}_${socket.adminId}`;
+
+      socket.join(finalRoom);
+
+      let room = await ChatRoom.findOne({ roomName: finalRoom });
+      if (!room) {
+        room = await ChatRoom.create({
+          roomName: finalRoom,
+          roomType,
+          members: [user._id],
+          adminId: socket.adminId,
+        });
+      } else if (!room.members.includes(user._id)) {
+        room.members.push(user._id);
+        await room.save();
+      }
+
+      console.log(`🟢 ${user.name} joined ${finalRoom}`);
+    });
+
+    // =============================
+    // ⭐ SEND MESSAGE
+    // =============================
+    socket.on("chat-send", async ({ roomName, text }) => {
+      if (!socket.adminId) return;
+
+      const finalRoom = `${roomName}_${socket.adminId}`;
+
+      let room = await ChatRoom.findOne({ roomName: finalRoom });
+      if (!room) {
+        room = await ChatRoom.create({
+          roomName: finalRoom,
+          roomType: "direct",
+          members: [user._id],
+          adminId: socket.adminId,
+        });
+      }
+
+      const msg = await Message.create({
+        roomId: room._id,
+        senderId: user._id,
+        senderName: user.name,
+        text,
+      });
+
+      io.to(finalRoom).emit("chat-receive", msg);
+    });
+
+    // =============================
+    // ⭐ ADMIN BROADCAST (only inside college)
+    // =============================
+    socket.on("admin-broadcast", async ({ target, text }) => {
+      if (user.role !== "admin") return;
+
+      let finalRoom = `${target}_${socket.adminId}`;
+
+      io.to(finalRoom).emit("chat-broadcast-receive", {
+        senderName: "ADMIN",
+        text,
+        createdAt: new Date(),
+      });
+
+      console.log("📢 Broadcast:", finalRoom);
+    });
+
+    socket.on("disconnect", () => {
+      console.log("🔴 Socket disconnected:", socket.id);
+    });
+  });
 
   socket.on("chat-join", async ({ token, roomName, roomType }) => {
     try {

@@ -2,67 +2,40 @@
 import { useEffect, useRef } from "react";
 import { io } from "socket.io-client";
 
-export function useSocket({
-  serverUrl,
-  token,
-  onConnect,
-  onMessage,
-  onBroadcast,
-}) {
+export function useSocket({ serverUrl, token, onMessage }) {
   const socketRef = useRef(null);
 
   useEffect(() => {
     if (!token) return;
-    const socket = io(serverUrl, { auth: { token } });
+
+    const socket = io(serverUrl, {
+      auth: { token },
+    });
+
     socketRef.current = socket;
 
     socket.on("connect", () => {
-      onConnect && onConnect(socket);
+      console.log("💛 Socket Connected");
+      socket.emit("setup-rooms", { token });
     });
 
-    socket.on("chat-receive", (msg) => {
+    // NEW EVENT NAME
+    socket.on("receive-message", (msg) => {
       onMessage && onMessage(msg);
     });
 
-    socket.on("chat-broadcast-receive", (payload) => {
-      onBroadcast && onBroadcast(payload);
-    });
-
     socket.on("connect_error", (err) => {
-      console.error("Socket connect error", err);
+      console.error("Socket connection error", err);
     });
 
-    return () => {
-      socket.disconnect();
-    };
+    return () => socket.disconnect();
   }, [serverUrl, token]);
 
+  // NEW SEND EVENT
   const sendMessage = (roomName, text) => {
     if (!socketRef.current) return;
-    socketRef.current.emit("chat-send", {
-      token: localStorage.getItem("token"),
-      roomName,
-      text,
-    });
+    socketRef.current.emit("send-message", { roomName, text });
   };
 
-  const joinRoom = (roomName, roomType = "bus") => {
-    if (!socketRef.current) return;
-    socketRef.current.emit("chat-join", {
-      token: localStorage.getItem("token"),
-      roomName,
-      roomType,
-    });
-  };
-
-  const adminBroadcast = (target, text) => {
-    if (!socketRef.current) return;
-    socketRef.current.emit("admin-broadcast", {
-      token: localStorage.getItem("token"),
-      target,
-      text,
-    });
-  };
-
-  return { sendMessage, joinRoom, adminBroadcast, socket: socketRef.current };
+  return { sendMessage };
 }

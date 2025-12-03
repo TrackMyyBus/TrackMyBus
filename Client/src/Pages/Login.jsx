@@ -32,8 +32,22 @@ export default function Login() {
       localStorage.setItem("userId", userData.userId);
 
       // save busId for drivers/students
-      if (userData.role === "driver" || userData.role === "student") {
-        localStorage.setItem("busId", userData.profile.busId || "");
+      // ⭐ Save adminId (institute) for all roles
+      localStorage.setItem(
+        "adminId",
+        userData.profile.institute || userData.adminId || ""
+      );
+
+      // ⭐ Save busId correctly (using assignedBus)
+      if (userData.role === "driver") {
+        localStorage.setItem("driverBusId", userData.profile.assignedBus || "");
+      }
+
+      if (userData.role === "student") {
+        localStorage.setItem(
+          "studentBusId",
+          userData.profile.assignedBus || ""
+        );
       }
 
       // Save in AuthContext (optional)
