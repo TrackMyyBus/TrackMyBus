@@ -1,22 +1,36 @@
-// src/components/PrivateRoute.jsx
-import React from "react";
+import React, { useEffect } from "react";
 import { Navigate } from "react-router-dom";
 
 export default function PrivateRoute({ children, role }) {
-  // Example: check if user is logged in and their role
-  const token = localStorage.getItem("token"); // your auth token
-  const userRole = localStorage.getItem("role"); // e.g., "admin", "driver", "student"
+  const token = localStorage.getItem("token");
+  const userRole = localStorage.getItem("role");
 
+  // Not logged in
   if (!token) {
-    // Not logged in → redirect to login
-    return <Navigate to="/login" replace />;
+    return <AuthRedirect message="Please login first!" redirect="/login" />;
   }
 
-  if (role && userRole !== role) {
-    // Logged in but role doesn't match → redirect to home or error page
-    return <Navigate to="/" replace />;
+  // Logged in but wrong role
+  if (role && userRole?.toLowerCase().trim() !== role.toLowerCase().trim()) {
+    return (
+      <AuthRedirect
+        message={`Access denied! Only ${role.toUpperCase()} can access this page.`}
+        redirect="/"
+      />
+    );
   }
 
-  // Logged in & role matches → render the children
+  // All good
   return children;
+}
+
+/* -----------------------------------------------
+   Custom Component to Show Popup → Then Redirect
+------------------------------------------------- */
+function AuthRedirect({ message, redirect }) {
+  useEffect(() => {
+    alert(message);
+  }, [message]);
+
+  return <Navigate to={redirect} replace />;
 }

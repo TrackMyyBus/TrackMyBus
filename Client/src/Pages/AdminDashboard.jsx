@@ -3,12 +3,16 @@ import Sidebar from "@/components/AdminDashboard/Sidebar";
 import DashboardOverview from "@/components/AdminDashboard/DashboardOverview";
 import ResponsiveTable from "@/components/AdminDashboard/ResponsiveTable";
 import RoutesSection from "@/components/AdminDashboard/RoutesSection";
-import NotificationsSection from "@/components/AdminDashboard/NotificationsSection";
-import ChatSection from "@/components/AdminDashboard/ChatSection";
 import BusLocationPage from "@/components/AdminDashboard/BusLocationPage";
 
 import { AuthContext } from "../contexts/AuthContext";
 import useAdminData from "@/hooks/useAdminData";
+import { API_BASE_URL } from "@/config/api";
+import io from "socket.io-client";
+
+const socket = io(API_BASE_URL, {
+  transports: ["websocket", "polling"],
+});
 
 export default function AdminDashboard() {
   const { user } = useContext(AuthContext);
@@ -25,7 +29,6 @@ export default function AdminDashboard() {
     localStorage.setItem("activeTab", activeTab);
   }, [activeTab]);
 
-  // sidebar state centralised
   const [sidebarOpen, setSidebarOpen] = useState(
     JSON.parse(localStorage.getItem("sidebarOpen")) ?? true
   );
@@ -33,28 +36,60 @@ export default function AdminDashboard() {
   const { loading, overview, students, drivers, buses, routes, refreshAll } =
     useAdminData(adminId, token);
 
-  if (!adminId) {
+  /** -----------------------------
+   * ⭐ Notifications State
+   * ------------------------------ */
+  const [notifications, setNotifications] = useState([]);
+
+  useEffect(() => {
+    if (!adminId) return;
+
+    // Load notifications from backend
+    const fetchNotes = async () => {
+      try {
+        const res = await fetch(
+          `${API_BASE_URL}/api/notification/admin/${adminId}`
+        );
+        const data = await res.json();
+        if (data.success) setNotifications(data.notes);
+      } catch (err) {
+        console.log("Notification fetch error:", err);
+      }
+    };
+
+    fetchNotes();
+
+    // Live Notifications (Socket.io)
+    socket.on("new-notification", (note) => {
+      // Only for admin or all
+      if (
+        note.receiverType === "all" ||
+        (note.receiverType === "admin" && note.receiverId == adminId)
+      ) {
+        setNotifications((prev) => [note, ...prev]);
+      }
+    });
+
+    return () => socket.off("new-notification");
+  }, [adminId]);
+
+  /** -----------------------------
+   *  UI Protection
+   * ------------------------------ */
+  if (!adminId)
     return (
       <div className="p-6 text-xl text-red-500">
         ❌ Admin ID missing. Please log in again.
       </div>
     );
-  }
 
-  if (loading)
-    return (
-      <div className="p-6 text-xl font-bold text-gray-700">
-        Loading dashboard...
-      </div>
-    );
+  if (loading) return <div className="p-6 text-xl">Loading dashboard…</div>;
 
-  // main margin adjusts with sidebar and is responsive
   const mainClass = `
-  flex-1 transition-all duration-300 min-h-screen 
-  p-4 md:p-6 
-  pl-14   /* <-- This fixes mobile heading shift */
-  ${sidebarOpen ? "sm:ml-72 md:ml-64" : "sm:ml-16 md:ml-16"}
-`;
+    flex-1 transition-all duration-300 min-h-screen 
+    p-4 md:p-6 
+    pl-14 ${sidebarOpen ? "sm:ml-72 md:ml-64" : "sm:ml-16 md:ml-16"}
+  `;
 
   return (
     <div className="flex bg-gray-100">
@@ -69,16 +104,16 @@ export default function AdminDashboard() {
         {activeTab === "dashboard" && (
           <DashboardOverview
             stats={{
-              totalStudents: overview?.studentsCount || 0,
-              totalDrivers: overview?.driversCount || 0,
-              totalBuses: overview?.busesCount || 0,
-              activeRoutes: overview?.routesCount || 0,
+              totalStudents: overview?.studentsCount,
+              totalDrivers: overview?.driversCount,
+              totalBuses: overview?.busesCount,
+              activeRoutes: overview?.routesCount,
             }}
             chart={[
-              { category: "Students", count: overview?.studentsCount || 0 },
-              { category: "Drivers", count: overview?.driversCount || 0 },
-              { category: "Buses", count: overview?.busesCount || 0 },
-              { category: "Routes", count: overview?.routesCount || 0 },
+              { category: "Students", count: overview?.studentsCount },
+              { category: "Drivers", count: overview?.driversCount },
+              { category: "Buses", count: overview?.busesCount },
+              { category: "Routes", count: overview?.routesCount },
             ]}
           />
         )}
@@ -123,10 +158,6 @@ export default function AdminDashboard() {
             refreshRoutes={refreshAll}
           />
         )}
-
-        {activeTab === "notifications" && <NotificationsSection />}
-
-        {activeTab === "chat" && <ChatSection />}
 
         {activeTab === "busLocations" && <BusLocationPage />}
       </main>

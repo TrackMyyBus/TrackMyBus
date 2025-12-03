@@ -1,49 +1,76 @@
 import React, { useEffect, useState } from "react";
-import { MapContainer, TileLayer, Marker, Popup } from "react-leaflet";
+import { MapContainer, TileLayer, Marker, Popup, useMap } from "react-leaflet";
 import "leaflet/dist/leaflet.css";
 import L from "leaflet";
 import io from "socket.io-client";
+import { API_BASE_URL } from "@/config/api";
 
-const socket = io("http://localhost:5000"); // your backend URL
-
-// Custom bus icon
-const busIcon = new L.Icon({
-  iconUrl: "https://cdn-icons-png.flaticon.com/512/61/61168.png",
-  iconSize: [40, 40],
+// Blue Marker Icon
+const blueMarker = new L.Icon({
+  iconUrl:
+    "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon.png", // blue location marker
+  iconAnchor: [20, 40],
 });
 
-export default function Map({ driverId }) {
-  const [location, setLocation] = useState({ lat: 28.6139, lng: 77.209 });
+// Socket
+const socket = io(API_BASE_URL);
 
+// Component: auto-center map when marker updates
+function Recenter({ lat, lng }) {
+  const map = useMap();
   useEffect(() => {
-    // Listen for live location updates from backend
-    socket.on("locationUpdate", (data) => {
-      if (data.driverId === driverId) {
-        setLocation({ lat: data.lat, lng: data.lng });
-      }
+    if (lat && lng) {
+      map.setView([lat, lng], 15);
+    }
+  }, [lat, lng]);
+  return null;
+}
+
+export default function Map({ location, busId, height = "350px" }) {
+  const [liveLocation, setLiveLocation] = useState(location);
+
+  // Update from DriverDashboard props
+  useEffect(() => {
+    if (location) {
+      setLiveLocation(location);
+    }
+  }, [location]);
+
+  // Listen for server socket updates (admin + student also use this)
+  useEffect(() => {
+    if (!busId) return;
+
+    const eventName = `bus-${busId}-location`;
+
+    socket.on(eventName, (data) => {
+      setLiveLocation({
+        latitude: data.latitude,
+        longitude: data.longitude,
+      });
     });
 
-    return () => socket.off("locationUpdate");
-  }, [driverId]);
+    return () => socket.off(eventName);
+  }, [busId]);
+
+  // Coordinates fallback
+  const lat = liveLocation?.latitude ?? 22.7196;
+  const lng = liveLocation?.longitude ?? 75.8577;
 
   return (
-    <div
-      style={{
-        height: "400px",
-        width: "100%",
-        borderRadius: "10px",
-        overflow: "hidden",
-      }}>
+    <div style={{ height, width: "100%" }}>
       <MapContainer
-        center={[location.lat, location.lng]}
+        center={[lat, lng]}
         zoom={15}
         style={{ height: "100%", width: "100%" }}>
-        <TileLayer
-          url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-          attribution="&copy; OpenStreetMap contributors"
-        />
-        <Marker position={[location.lat, location.lng]} icon={busIcon}>
-          <Popup>Driver’s Live Location</Popup>
+        {/* Map Layer */}
+        <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
+
+        {/* Follow Bus */}
+        <Recenter lat={lat} lng={lng} />
+
+        {/* Blue Marker */}
+        <Marker position={[lat, lng]} icon={blueMarker}>
+          <Popup>Live Bus Location</Popup>
         </Marker>
       </MapContainer>
     </div>

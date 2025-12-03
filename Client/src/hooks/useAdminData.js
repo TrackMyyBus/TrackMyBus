@@ -1,5 +1,8 @@
+// useAdminData.js
+
 import { useState, useEffect } from "react";
 import axios from "axios";
+import { API_BASE_URL } from "@/config/api";
 
 export default function useAdminData(adminId, token) {
     const [loading, setLoading] = useState(true);
@@ -10,8 +13,9 @@ export default function useAdminData(adminId, token) {
     const [buses, setBuses] = useState([]);
     const [routes, setRoutes] = useState([]);
 
+    // ⭐ FIXED — dynamic baseURL for DevTunnel or localhost
     const api = axios.create({
-        baseURL: "http://localhost:5000/api",
+        baseURL: `${API_BASE_URL}/api`,
         headers: { Authorization: `Bearer ${token}` },
     });
 

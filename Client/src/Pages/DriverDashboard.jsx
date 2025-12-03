@@ -1,3 +1,4 @@
+// src/Pages/DriverDashboard.jsx
 import React, { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
@@ -6,24 +7,38 @@ import { Progress } from "@/components/ui/progress";
 import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
 import { useNavigate } from "react-router-dom";
+
 import {
   FaBell,
   FaRoute,
   FaBusAlt,
-  FaRegClock,
   FaMapMarkerAlt,
   FaSignOutAlt,
   FaCog,
   FaKey,
+  FaPaperPlane,
+  FaInbox,
 } from "react-icons/fa";
 
+import { API_BASE_URL } from "@/config/api";
 import Map from "@/components/Map";
 import "leaflet/dist/leaflet.css";
+import { io } from "socket.io-client";
+
+const socket = io(API_BASE_URL, {
+  transports: ["websocket", "polling"],
+  reconnectionAttempts: 10,
+  reconnectionDelay: 500,
+  timeout: 20000,
+});
 
 export default function DriverDashboard() {
   const navigate = useNavigate();
-  const [isMenuOpen, setIsMenuOpen] = useState(false);
 
+  /* --------------------------------------------
+        LOCAL STATES
+  -------------------------------------------- */
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [tripStarted, setTripStarted] = useState(false);
   const [progress, setProgress] = useState(0);
   const [sharing, setSharing] = useState(false);
@@ -34,257 +49,262 @@ export default function DriverDashboard() {
   const [bus, setBus] = useState(null);
   const [route, setRoute] = useState(null);
 
+  const [notifications, setNotifications] = useState([]);
+
+  // NEW - toggle UI
+  const [showSendForm, setShowSendForm] = useState(false);
+
+  // Notification form inputs
+  const [notifyTitle, setNotifyTitle] = useState("");
+  const [notifyMessage, setNotifyMessage] = useState("");
+  const [receiver, setReceiver] = useState("admin");
+
   const user = JSON.parse(localStorage.getItem("user"));
   const driverUserId = user?.userId;
+  const instituteId = user?.institute;
 
-  // ----------------------------------------
-  // LOGOUT
-  // ----------------------------------------
+  /* --------------------------------------------
+        LOGOUT
+  -------------------------------------------- */
   const handleLogout = () => {
-    localStorage.removeItem("token");
-    localStorage.removeItem("user");
-    localStorage.removeItem("activeTab");
+    localStorage.clear();
     navigate("/");
   };
 
-  // ----------------------------------------
-  // FETCH REAL DRIVER DASHBOARD DATA
-  // ----------------------------------------
+  /* --------------------------------------------
+        LOAD DASHBOARD DETAILS
+  -------------------------------------------- */
   useEffect(() => {
     if (!driverUserId) return;
 
     const loadDashboard = async () => {
-      try {
-        const res = await fetch(
-          `http://localhost:5000/api/drivers/dashboard/${driverUserId}`
-        );
-        const data = await res.json();
+      const res = await fetch(
+        `${API_BASE_URL}/api/drivers/dashboard/${driverUserId}`
+      );
+      const data = await res.json();
 
-        if (data.success) {
-          setDriver(data.dashboard.driver);
-          setBus(data.dashboard.bus);
-          setRoute(data.dashboard.route);
-        }
-      } catch (err) {
-        console.error("Driver dashboard error:", err);
+      if (data.success) {
+        setDriver(data.dashboard.driver);
+        setBus(data.dashboard.bus);
+        setRoute(data.dashboard.route);
       }
     };
 
     loadDashboard();
   }, [driverUserId]);
 
-  // ----------------------------------------
-  // TRIP CONTROL
-  // ----------------------------------------
+  /* --------------------------------------------
+        SOCKET: DRIVER ROOM + NOTIFICATIONS
+  -------------------------------------------- */
+  useEffect(() => {
+    if (driver?._id) {
+      socket.emit("joinRoom", `driver-${driver._id}`);
+
+      socket.on("new-notification", (note) => {
+        if (
+          note.institute === instituteId &&
+          (note.receiverType === "driver" ||
+            note.receiverType === "all" ||
+            note.receiverId === driverUserId)
+        ) {
+          setNotifications((prev) => [note, ...prev]);
+        }
+      });
+    }
+
+    return () => socket.off("new-notification");
+  }, [driver]);
+
+  /* --------------------------------------------
+        TRIP PROGRESS
+  -------------------------------------------- */
   const handleTripToggle = () => {
     if (!tripStarted) {
       setTripStarted(true);
-      simulateTripProgress();
+      simulateTrip();
+      startLocationSharing();
     } else {
       setTripStarted(false);
       setProgress(0);
-      stopSharingLocation();
+      stopLocationSharing();
     }
   };
 
-  const simulateTripProgress = () => {
+  const simulateTrip = () => {
     let current = 0;
     const timer = setInterval(() => {
-      if (current >= 100 || !tripStarted) clearInterval(timer);
-      else {
+      if (!tripStarted || current >= 100) {
+        clearInterval(timer);
+      } else {
         current += 10;
         setProgress(current);
       }
     }, 1000);
   };
 
-  // ----------------------------------------
-  // Notify backend when driver starts sharing
-  // ----------------------------------------
-  const notifyBackendStartSharing = async () => {
-    try {
-      await fetch("http://localhost:5000/api/bus-location/start", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ driverId: driver?._id, busId: bus?._id }),
-      });
-    } catch (err) {
-      console.error("Failed to notify backend:", err);
-    }
-  };
+  /* --------------------------------------------
+        LOCATION SHARING
+  -------------------------------------------- */
+  const startLocationSharing = () => {
+    if (!bus?._id) return alert("Bus not assigned!");
 
-  // ----------------------------------------
-  // GPS LIVE LOCATION SHARING
-  // ----------------------------------------
-  const startSharingLocation = () => {
+    socket.emit("driver-start", {
+      driverId: driver._id,
+      busId: bus._id,
+    });
+
     if ("geolocation" in navigator) {
       const id = navigator.geolocation.watchPosition(
-        async (pos) => {
-          const { latitude, longitude } = pos.coords;
-          setBusLocation({ latitude, longitude });
+        (pos) => {
+          const { latitude, longitude, speed, heading } = pos.coords;
 
-          if (!bus?._id) return;
+          setBusLocation({
+            latitude: Number(latitude),
+            longitude: Number(longitude),
+          });
 
-          try {
-            await fetch("http://localhost:5000/api/bus-location/update", {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ busId: bus._id, latitude, longitude }),
-            });
-          } catch (err) {
-            console.error("Failed to update location:", err);
-          }
+          socket.emit("driver-location", {
+            driverId: driver._id,
+            busId: bus._id,
+            latitude,
+            longitude,
+            speed: speed || 0,
+            heading: heading || 0,
+            battery: 90,
+          });
         },
-        (err) => console.error("GPS error:", err),
-        { enableHighAccuracy: true, timeout: 5000, maximumAge: 0 }
+        console.error,
+        { enableHighAccuracy: true, timeout: 5000 }
       );
 
       setWatchId(id);
       setSharing(true);
-    } else {
-      alert("Geolocation not supported!");
     }
   };
 
-  const stopSharingLocation = () => {
-    if (watchId) {
-      navigator.geolocation.clearWatch(watchId);
-      setWatchId(null);
-    }
+  const stopLocationSharing = () => {
+    if (watchId) navigator.geolocation.clearWatch(watchId);
     setSharing(false);
   };
 
-  useEffect(() => {
-    if (!tripStarted) stopSharingLocation();
-  }, [tripStarted]);
+  /* --------------------------------------------
+        SEND NOTIFICATION (REAL BACKEND)
+  -------------------------------------------- */
+  const sendNotification = async () => {
+    if (!notifyTitle || !notifyMessage)
+      return alert("Please fill title & message");
 
-  // ----------------------------------------
-  // UI
-  // ----------------------------------------
+    const payload = {
+      title: notifyTitle,
+      message: notifyMessage,
+      senderType: "driver",
+      senderId: driverUserId,
+      receiverType: receiver,
+      institute: instituteId, // IMPORTANT
+    };
+
+    const res = await fetch(`${API_BASE_URL}/api/notification/create`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    });
+
+    const data = await res.json();
+
+    if (data.success) {
+      alert("Notification sent!");
+      setNotifyTitle("");
+      setNotifyMessage("");
+      setShowSendForm(false);
+    }
+  };
+
+  /* --------------------------------------------
+        UI STARTS HERE
+  -------------------------------------------- */
   return (
     <div className="min-h-screen bg-gradient-to-br from-yellow-50 to-white p-6 sm:p-8">
-      {/* Header */}
-      <div className="flex items-center justify-between mb-6">
+      {/* HEADER */}
+      <div className="flex items-center justify-between mb-6 relative">
         <h1 className="text-3xl font-extrabold text-indigo-900">
           Driver Dashboard
         </h1>
 
-        <div className="relative">
-          <button
-            onClick={() => setIsMenuOpen(!isMenuOpen)}
-            className="p-2 rounded-full hover:bg-indigo-100 transition">
-            <FaCog className="text-indigo-900 text-2xl" />
-          </button>
+        <button
+          onClick={() => setIsMenuOpen(!isMenuOpen)}
+          className="p-2 rounded-full hover:bg-indigo-100">
+          <FaCog className="text-indigo-900 text-2xl" />
+        </button>
 
-          {isMenuOpen && (
-            <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 z-10">
-              <button
-                onClick={() => navigate("/update-password")}
-                className="w-full flex items-center gap-2 px-4 py-2 hover:bg-indigo-50 text-indigo-800">
-                <FaKey /> Reset Password
-              </button>
-              <button
-                onClick={handleLogout}
-                className="w-full flex items-center gap-2 px-4 py-2 hover:bg-red-50 text-red-600">
-                <FaSignOutAlt /> Logout
-              </button>
-            </div>
-          )}
-        </div>
+        {isMenuOpen && (
+          <div className="absolute right-0 mt-12 w-48 bg-white rounded-xl shadow-lg border z-50">
+            <button
+              onClick={() => navigate("/update-password")}
+              className="w-full flex items-center gap-2 px-4 py-2 hover:bg-indigo-50 text-indigo-800">
+              <FaKey /> Reset Password
+            </button>
+            <button
+              onClick={handleLogout}
+              className="w-full flex items-center gap-2 px-4 py-2 hover:bg-red-50 text-red-600">
+              <FaSignOutAlt /> Logout
+            </button>
+          </div>
+        )}
       </div>
 
       {/* GRID */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* ROUTE CARD */}
-        <Card className="shadow-lg border-none">
+        <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-indigo-900">
               <FaRoute /> Assigned Route
             </CardTitle>
           </CardHeader>
-
-          <CardContent className="space-y-2 text-slate-600">
+          <CardContent>
             <p>
-              <strong>Bus:</strong> {bus?.busNumberPlate || "Loading..."}
+              <b>Bus:</b> {bus?.busNumberPlate}
             </p>
-
             <p>
-              <strong>Route:</strong> {route?.routeName || "Loading..."}
+              <b>Route:</b> {route?.routeName}
             </p>
-
             <p>
-              <strong>Stops:</strong>{" "}
+              <b>Stops:</b>{" "}
               {route?.stops?.map((s) => s.name).join(" → ") || "Loading..."}
             </p>
           </CardContent>
         </Card>
 
         {/* TRIP CONTROL */}
-        <Card className="shadow-lg border-none">
+        <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-indigo-900">
               <FaBusAlt /> Trip Control
             </CardTitle>
           </CardHeader>
-
           <CardContent className="space-y-4">
-            <div className="flex items-center justify-between">
-              <p className="font-medium">Trip Status:</p>
-              <Badge
-                variant={tripStarted ? "default" : "secondary"}
-                className={tripStarted ? "bg-green-500" : "bg-gray-400"}>
-                {tripStarted ? "Ongoing" : "Not Started"}
-              </Badge>
-            </div>
+            <Badge className={tripStarted ? "bg-green-500" : "bg-gray-400"}>
+              {tripStarted ? "Ongoing" : "Not Started"}
+            </Badge>
 
-            <Progress value={progress} className="h-3" />
+            <Progress value={progress} />
 
             <Button
               onClick={handleTripToggle}
-              className={`w-full ${
-                tripStarted
-                  ? "bg-red-500 hover:bg-red-600"
-                  : "bg-yellow-500 hover:bg-yellow-600"
-              }`}>
+              className={tripStarted ? "bg-red-500" : "bg-yellow-500"}>
               {tripStarted ? "End Trip" : "Start Trip"}
             </Button>
 
-            {/* Sharing Switch */}
-            <div className="flex items-center justify-between mt-4">
+            <div className="flex items-center justify-between">
               <p>Enable Live Sharing</p>
-
-              <Switch
-                checked={sharing}
-                disabled={!tripStarted}
-                onCheckedChange={async (checked) => {
-                  if (checked) {
-                    await notifyBackendStartSharing();
-                    startSharingLocation();
-                  } else {
-                    stopSharingLocation();
-                  }
-                }}
-              />
+              <Switch checked={sharing} onCheckedChange={setSharing} />
             </div>
-          </CardContent>
-        </Card>
-
-        {/* NOTIFICATIONS */}
-        <Card className="shadow-lg border-none">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-indigo-900">
-              <FaBell /> Notifications
-            </CardTitle>
-          </CardHeader>
-
-          <CardContent className="space-y-3 text-slate-600">
-            <p>No notifications yet</p>
           </CardContent>
         </Card>
       </div>
 
       {/* MAP */}
-      <Card className="mt-8 shadow-lg border-none col-span-full">
+      <Card className="mt-8 mb-12">
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-indigo-900">
             <FaMapMarkerAlt /> Live Bus Location
@@ -292,24 +312,14 @@ export default function DriverDashboard() {
         </CardHeader>
 
         <CardContent>
-          <Map location={busLocation} height="300px" />
+          <Map
+            location={busLocation}
+            busId={bus?._id}
+            route={route}
+            height="300px"
+          />
         </CardContent>
       </Card>
-
-      {/* FOOTER */}
-      <motion.div
-        initial={{ opacity: 0, y: 10 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="mt-10 bg-indigo-50 p-4 rounded-xl flex flex-col sm:flex-row items-center justify-between shadow-md gap-2">
-        <div className="flex items-center gap-2 text-indigo-900 font-medium">
-          <FaRegClock />
-          {tripStarted ? "Trip in progress..." : "Awaiting trip start"}
-        </div>
-
-        <span className="text-slate-600 text-sm">
-          Driver ID: {driver?.driverId || "Loading..."}
-        </span>
-      </motion.div>
     </div>
   );
 }

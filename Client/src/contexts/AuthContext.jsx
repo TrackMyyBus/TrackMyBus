@@ -8,7 +8,7 @@ export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
 
   // -------------------------------------------------
-  // SAFE Load user on refresh (prevents crash)
+  // Load user on refresh safely
   // -------------------------------------------------
   useEffect(() => {
     const storedUser = localStorage.getItem("user");
@@ -31,8 +31,12 @@ export const AuthProvider = ({ children }) => {
   // LOGIN
   // -------------------------------------------------
   const loginUser = (userData, token) => {
+    // Save core info
     localStorage.setItem("user", JSON.stringify(userData));
     localStorage.setItem("token", token);
+
+    // ⭐ FIX: PrivateRoute requires this!
+    localStorage.setItem("role", userData.role);
 
     // ⭐ ADMIN
     if (userData.role === "admin" && userData.adminId) {
@@ -41,15 +45,15 @@ export const AuthProvider = ({ children }) => {
 
     // ⭐ STUDENT
     if (userData.role === "student") {
-      localStorage.setItem("studentUserId", userData.userId); // Login User ID
-      localStorage.setItem("studentProfileId", userData.profile._id); // Profile ID
+      localStorage.setItem("studentUserId", userData.userId);
+      localStorage.setItem("studentProfileId", userData.profile._id);
       localStorage.setItem("enrollmentId", userData.profile.enrollmentId);
     }
 
     // ⭐ DRIVER
     if (userData.role === "driver") {
-      localStorage.setItem("driverUserId", userData.userId); // Login User ID
-      localStorage.setItem("driverProfileId", userData.profile._id); // Profile ID
+      localStorage.setItem("driverUserId", userData.userId);
+      localStorage.setItem("driverProfileId", userData.profile._id);
     }
 
     setUser(userData);
@@ -61,6 +65,8 @@ export const AuthProvider = ({ children }) => {
   const logoutUser = () => {
     localStorage.removeItem("user");
     localStorage.removeItem("token");
+    localStorage.removeItem("role"); // ⭐ ADDED
+
     localStorage.removeItem("adminId");
 
     // Student

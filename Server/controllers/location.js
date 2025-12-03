@@ -1,10 +1,7 @@
 import Bus from "../models/Bus.js";
 import BusLocation from "../models/BusLocation.js";
 
-// ============================================================
-// ✅ SAVE LOCATION (HTTP fallback if WebSockets fail)
-// POST /api/location/update
-// ============================================================
+// SAVE LOCATION
 export const saveLocation = async (req, res) => {
     try {
         const {
@@ -17,7 +14,6 @@ export const saveLocation = async (req, res) => {
             battery
         } = req.body;
 
-        // Update Bus model with latest location
         await Bus.findByIdAndUpdate(busId, {
             currentLocation: {
                 latitude,
@@ -30,64 +26,49 @@ export const saveLocation = async (req, res) => {
             trackingStatus: "online",
         });
 
-        // Save historical entry
         await BusLocation.create({
             bus: busId,
             driver: driverId,
             latitude,
             longitude,
             speed,
+            heading,
+            battery,
             status: speed > 0 ? "moving" : "stopped",
             timestamp: new Date(),
         });
 
-        res.status(200).json({
-            success: true,
-            message: "Location updated successfully",
-        });
+        return res.json({ success: true, message: "Location updated" });
 
-    } catch (error) {
-        console.error("Save Location Error:", error);
+    } catch (err) {
+        console.error(err);
         res.status(500).json({ success: false, message: "Server Error" });
     }
 };
 
-// ============================================================
-// ✅ GET LATEST BUS LOCATION
-// GET /api/location/latest/:busId
-// ============================================================
+// LATEST LOCATION
 export const getLatestLocation = async (req, res) => {
     try {
         const bus = await Bus.findById(req.params.busId);
 
-        if (!bus)
-            return res.status(404).json({ message: "Bus not found" });
+        if (!bus) return res.status(404).json({ message: "Bus not found" });
 
-        res.status(200).json({
-            success: true,
-            latest: bus.currentLocation,
-        });
-    } catch (error) {
-        console.error("Latest Location Error:", error);
+        res.json({ success: true, latest: bus.currentLocation });
+
+    } catch (err) {
         res.status(500).json({ success: false, message: "Server Error" });
     }
 };
 
-// ============================================================
-// ❇️ GET FULL LOCATION HISTORY
-// GET /api/location/history/:busId
-// ============================================================
+// HISTORY
 export const getLocationHistory = async (req, res) => {
     try {
         const history = await BusLocation.find({ bus: req.params.busId })
             .sort({ timestamp: -1 });
 
-        res.status(200).json({
-            success: true,
-            history
-        });
-    } catch (error) {
-        console.error("Location History Error:", error);
+        res.json({ success: true, history });
+
+    } catch (err) {
         res.status(500).json({ success: false, message: "Server Error" });
     }
 };

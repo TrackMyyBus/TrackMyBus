@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { motion } from "framer-motion";
 import { Link, useNavigate } from "react-router-dom";
 import axios from "axios";
+import { API_BASE_URL } from "@/config/api";
 
 export default function UpdatePassword() {
   const navigate = useNavigate();
@@ -15,7 +16,7 @@ export default function UpdatePassword() {
     confirmPassword: "",
   });
 
-  const baseURL = "http://localhost:5000/api/password";
+  const baseURL = `${API_BASE_URL}/api/password`;
 
   // Step 1: Send OTP
   const sendOTP = async () => {

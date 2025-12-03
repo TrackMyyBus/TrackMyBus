@@ -6,22 +6,19 @@ const busLocationSchema = new mongoose.Schema({
         ref: "Bus",
         required: true,
     },
+
     driver: {
         type: mongoose.Schema.Types.ObjectId,
         ref: "Driver",
-    },
-
-    latitude: {
-        type: Number,
-        required: true,
-    },
-    longitude: {
-        type: Number,
         required: true,
     },
 
+    latitude: { type: Number, required: true },
+    longitude: { type: Number, required: true },
     speed: { type: Number, default: 0 },
+    heading: { type: Number },
     accuracy: { type: Number },
+    battery: { type: Number },
 
     timestamp: {
         type: Date,

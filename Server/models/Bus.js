@@ -14,11 +14,13 @@ const busSchema = new mongoose.Schema({
     assignedDriver: {
         type: mongoose.Schema.Types.ObjectId,
         ref: "Driver",
+        default: null,
     },
 
     assignedRoute: {
         type: mongoose.Schema.Types.ObjectId,
         ref: "Route",
+        default: null,
     },
 
     status: {
