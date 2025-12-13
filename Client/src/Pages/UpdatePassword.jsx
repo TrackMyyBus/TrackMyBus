@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { motion } from "framer-motion";
 import { Link, useNavigate } from "react-router-dom";
 import axios from "axios";
-import { VITE_API_BASE_URL } from "@/config/api";
+const VITE_API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
 export default function UpdatePassword() {
   const navigate = useNavigate();

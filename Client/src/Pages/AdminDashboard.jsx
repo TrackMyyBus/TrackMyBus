@@ -7,7 +7,7 @@ import BusLocationPage from "@/components/AdminDashboard/BusLocationPage";
 
 import { AuthContext } from "../contexts/AuthContext";
 import useAdminData from "@/hooks/useAdminData";
-import { VITE_API_BASE_URL } from "@/config/api";
+const VITE_API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 import io from "socket.io-client";
 
 const socket = io(VITE_API_BASE_URL, {
@@ -48,7 +48,7 @@ export default function AdminDashboard() {
     const fetchNotes = async () => {
       try {
         const res = await fetch(
-          `${API_BASE_URL}/api/notification/admin/${adminId}`
+          `${VITE_API_BASE_URL}/api/notification/admin/${adminId}`
         );
         const data = await res.json();
         if (data.success) setNotifications(data.notes);

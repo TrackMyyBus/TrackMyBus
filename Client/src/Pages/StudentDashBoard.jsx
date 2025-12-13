@@ -17,7 +17,7 @@ import {
   FaKey,
 } from "react-icons/fa";
 
-import { VITE_API_BASE_URL } from "@/config/api";
+const VITE_API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 import io from "socket.io-client";
 import { MapContainer, TileLayer, Marker, Popup } from "react-leaflet";
 import "leaflet/dist/leaflet.css";
@@ -35,7 +35,7 @@ L.Icon.Default.mergeOptions({
 });
 
 // SOCKET CONNECT
-const socket = io(API_BASE_URL, {
+const socket = io(VITE_API_BASE_URL, {
   transports: ["websocket", "polling"],
   reconnectionAttempts: 10,
   reconnectionDelay: 500,
@@ -77,7 +77,7 @@ export default function StudentDashboard() {
     const fetchDashboard = async () => {
       try {
         const res = await fetch(
-          `${API_BASE_URL}/api/students/dashboard/${studentUserId}`
+          `${VITE_API_BASE_URL}/api/students/dashboard/${studentUserId}`
         );
         const data = await res.json();
 
@@ -120,7 +120,7 @@ export default function StudentDashboard() {
   ----------------------------------------------------------- */
   const loadBusInfo = async (busId) => {
     try {
-      const res = await fetch(`${API_BASE_URL}/api/buses/info/${busId}`);
+      const res = await fetch(`${VITE_API_BASE_URL}/api/buses/info/${busId}`);
       const data = await res.json();
 
       if (data.success) {
