@@ -17,7 +17,7 @@ import {
   FaKey,
 } from "react-icons/fa";
 
-import { API_BASE_URL } from "@/config/api";
+import { VITE_API_BASE_URL } from "@/config/api";
 import io from "socket.io-client";
 import { MapContainer, TileLayer, Marker, Popup } from "react-leaflet";
 import "leaflet/dist/leaflet.css";
@@ -138,7 +138,9 @@ export default function StudentDashboard() {
   ----------------------------------------------------------- */
   const loadLastLocation = async (busId) => {
     try {
-      const res = await fetch(`${API_BASE_URL}/api/location/latest/${busId}`);
+      const res = await fetch(
+        `${VITE_API_BASE_URL}/api/location/latest/${busId}`
+      );
       const data = await res.json();
 
       if (data?.latitude && data?.longitude) {
@@ -174,7 +176,8 @@ export default function StudentDashboard() {
         <div className="relative">
           <button
             onClick={() => setIsMenuOpen(!isMenuOpen)}
-            className="p-2 rounded-full hover:bg-indigo-100">
+            className="p-2 rounded-full hover:bg-indigo-100"
+          >
             <FaCog className="text-indigo-900 text-2xl" />
           </button>
 
@@ -182,12 +185,14 @@ export default function StudentDashboard() {
             <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border z-10">
               <button
                 onClick={() => navigate("/update-password")}
-                className="w-full flex items-center gap-2 px-4 py-2 hover:bg-indigo-50 text-indigo-800">
+                className="w-full flex items-center gap-2 px-4 py-2 hover:bg-indigo-50 text-indigo-800"
+              >
                 <FaKey /> Reset Password
               </button>
               <button
                 onClick={handleLogout}
-                className="w-full flex items-center gap-2 px-4 py-2 hover:bg-red-50 text-red-600">
+                className="w-full flex items-center gap-2 px-4 py-2 hover:bg-red-50 text-red-600"
+              >
                 <FaSignOutAlt /> Logout
               </button>
             </div>
@@ -247,7 +252,8 @@ export default function StudentDashboard() {
                 isTracking
                   ? "bg-red-500 hover:bg-red-600"
                   : "bg-yellow-500 hover:bg-yellow-600"
-              }`}>
+              }`}
+            >
               {isTracking ? "Stop Tracking" : "Track My Bus"}
             </Button>
           </CardContent>
@@ -267,7 +273,8 @@ export default function StudentDashboard() {
             <MapContainer
               center={[busLocation.lat, busLocation.lng]}
               zoom={14}
-              style={{ height: "350px", width: "100%" }}>
+              style={{ height: "350px", width: "100%" }}
+            >
               <TileLayer
                 url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
                 attribution="&copy; OpenStreetMap contributors"

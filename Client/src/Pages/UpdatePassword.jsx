@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { motion } from "framer-motion";
 import { Link, useNavigate } from "react-router-dom";
 import axios from "axios";
-import { API_BASE_URL } from "@/config/api";
+import { VITE_API_BASE_URL } from "@/config/api";
 
 export default function UpdatePassword() {
   const navigate = useNavigate();
@@ -16,7 +16,7 @@ export default function UpdatePassword() {
     confirmPassword: "",
   });
 
-  const baseURL = `${API_BASE_URL}/api/password`;
+  const baseURL = `${VITE_API_BASE_URL}/api/password`;
 
   // Step 1: Send OTP
   const sendOTP = async () => {
@@ -91,7 +91,8 @@ export default function UpdatePassword() {
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.6 }}
-        className="bg-white rounded-3xl shadow-xl p-8 sm:p-10 w-full max-w-md">
+        className="bg-white rounded-3xl shadow-xl p-8 sm:p-10 w-full max-w-md"
+      >
         <h2 className="text-2xl font-extrabold text-indigo-900 mb-6 text-center">
           Update Password
         </h2>
@@ -108,7 +109,8 @@ export default function UpdatePassword() {
             />
             <button
               onClick={sendOTP}
-              className="w-full py-2 rounded-lg bg-yellow-500 hover:bg-yellow-600 text-white font-medium transition">
+              className="w-full py-2 rounded-lg bg-yellow-500 hover:bg-yellow-600 text-white font-medium transition"
+            >
               Send OTP
             </button>
           </div>
@@ -127,12 +129,14 @@ export default function UpdatePassword() {
             <div className="flex gap-2">
               <button
                 onClick={verifyOTP}
-                className="flex-1 py-2 rounded-lg bg-yellow-500 hover:bg-yellow-600 text-white font-medium transition">
+                className="flex-1 py-2 rounded-lg bg-yellow-500 hover:bg-yellow-600 text-white font-medium transition"
+              >
                 Verify OTP
               </button>
               <button
                 onClick={sendOTP}
-                className="flex-1 py-2 rounded-lg border border-yellow-500 text-yellow-600 hover:bg-yellow-50 transition">
+                className="flex-1 py-2 rounded-lg border border-yellow-500 text-yellow-600 hover:bg-yellow-50 transition"
+              >
                 Resend
               </button>
             </div>
@@ -160,7 +164,8 @@ export default function UpdatePassword() {
             />
             <button
               type="submit"
-              className="w-full py-2 rounded-lg bg-yellow-500 hover:bg-yellow-600 text-white font-medium transition">
+              className="w-full py-2 rounded-lg bg-yellow-500 hover:bg-yellow-600 text-white font-medium transition"
+            >
               Update Password
             </button>
           </form>

@@ -5,7 +5,7 @@ import { motion } from "framer-motion";
 import { Link, useNavigate } from "react-router-dom";
 import axios from "axios";
 import { AuthContext } from "../contexts/AuthContext";
-import { API_BASE_URL } from "@/config/api";
+import { VITE_API_BASE_URL } from "@/config/api";
 
 export default function Signup() {
   const [form, setForm] = useState({
@@ -33,7 +33,10 @@ export default function Signup() {
       return alert("Passwords do not match!");
 
     try {
-      const res = await axios.post(`${API_BASE_URL}/api/auth/signup`, form);
+      const res = await axios.post(
+        `${VITE_API_BASE_URL}/api/auth/signup`,
+        form
+      );
 
       const { token, userData } = res.data;
 
@@ -64,7 +67,8 @@ export default function Signup() {
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.6 }}
-        className="bg-white rounded-3xl shadow-xl p-10 w-full max-w-md">
+        className="bg-white rounded-3xl shadow-xl p-10 w-full max-w-md"
+      >
         <h2 className="text-2xl font-extrabold text-indigo-900 mb-6 text-center">
           Admin Signup
         </h2>
@@ -158,7 +162,8 @@ export default function Signup() {
 
           <button
             type="submit"
-            className="w-full py-2 rounded-lg bg-yellow-500 hover:bg-yellow-600 text-white font-medium transition">
+            className="w-full py-2 rounded-lg bg-yellow-500 hover:bg-yellow-600 text-white font-medium transition"
+          >
             Sign Up
           </button>
         </form>

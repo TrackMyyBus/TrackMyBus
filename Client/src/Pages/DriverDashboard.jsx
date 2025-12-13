@@ -20,12 +20,12 @@ import {
   FaInbox,
 } from "react-icons/fa";
 
-import { API_BASE_URL } from "@/config/api";
+import { VITE_API_BASE_URL } from "@/config/api";
 import Map from "@/components/Map";
 import "leaflet/dist/leaflet.css";
 import { io } from "socket.io-client";
 
-const socket = io(API_BASE_URL, {
+const socket = io(VITE_API_BASE_URL, {
   transports: ["websocket", "polling"],
   reconnectionAttempts: 10,
   reconnectionDelay: 500,
@@ -232,7 +232,8 @@ export default function DriverDashboard() {
 
         <button
           onClick={() => setIsMenuOpen(!isMenuOpen)}
-          className="p-2 rounded-full hover:bg-indigo-100">
+          className="p-2 rounded-full hover:bg-indigo-100"
+        >
           <FaCog className="text-indigo-900 text-2xl" />
         </button>
 
@@ -240,12 +241,14 @@ export default function DriverDashboard() {
           <div className="absolute right-0 mt-12 w-48 bg-white rounded-xl shadow-lg border z-50">
             <button
               onClick={() => navigate("/update-password")}
-              className="w-full flex items-center gap-2 px-4 py-2 hover:bg-indigo-50 text-indigo-800">
+              className="w-full flex items-center gap-2 px-4 py-2 hover:bg-indigo-50 text-indigo-800"
+            >
               <FaKey /> Reset Password
             </button>
             <button
               onClick={handleLogout}
-              className="w-full flex items-center gap-2 px-4 py-2 hover:bg-red-50 text-red-600">
+              className="w-full flex items-center gap-2 px-4 py-2 hover:bg-red-50 text-red-600"
+            >
               <FaSignOutAlt /> Logout
             </button>
           </div>
@@ -291,7 +294,8 @@ export default function DriverDashboard() {
 
             <Button
               onClick={handleTripToggle}
-              className={tripStarted ? "bg-red-500" : "bg-yellow-500"}>
+              className={tripStarted ? "bg-red-500" : "bg-yellow-500"}
+            >
               {tripStarted ? "End Trip" : "Start Trip"}
             </Button>
 

@@ -7,10 +7,10 @@ import BusLocationPage from "@/components/AdminDashboard/BusLocationPage";
 
 import { AuthContext } from "../contexts/AuthContext";
 import useAdminData from "@/hooks/useAdminData";
-import { API_BASE_URL } from "@/config/api";
+import { VITE_API_BASE_URL } from "@/config/api";
 import io from "socket.io-client";
 
-const socket = io(API_BASE_URL, {
+const socket = io(VITE_API_BASE_URL, {
   transports: ["websocket", "polling"],
 });
 
