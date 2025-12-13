@@ -20,12 +20,12 @@ import {
   FaInbox,
 } from "react-icons/fa";
 
-const VITE_API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
+import { API_BASE_URL } from "@/config/api";
 import Map from "@/components/Map";
 import "leaflet/dist/leaflet.css";
 import { io } from "socket.io-client";
 
-const socket = io(VITE_API_BASE_URL, {
+const socket = io(API_BASE_URL, {
   transports: ["websocket", "polling"],
   reconnectionAttempts: 10,
   reconnectionDelay: 500,
@@ -79,7 +79,7 @@ export default function DriverDashboard() {
 
     const loadDashboard = async () => {
       const res = await fetch(
-        `${VITE_API_BASE_URL}/api/drivers/dashboard/${driverUserId}`
+        `${API_BASE_URL}/api/drivers/dashboard/${driverUserId}`
       );
       const data = await res.json();
 
@@ -203,7 +203,7 @@ export default function DriverDashboard() {
       institute: instituteId, // IMPORTANT
     };
 
-    const res = await fetch(`${VITE_API_BASE_URL}/api/notification/create`, {
+    const res = await fetch(`${API_BASE_URL}/api/notification/create`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(payload),

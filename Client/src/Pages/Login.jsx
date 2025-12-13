@@ -1,6 +1,7 @@
 import React, { useState, useContext } from "react";
 import axios from "axios";
-const VITE_API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
+import { API_BASE_URL } from "@/config/api";
+
 import { motion } from "framer-motion";
 import { Link, useNavigate } from "react-router-dom";
 import { AuthContext } from "../contexts/AuthContext";
@@ -17,7 +18,7 @@ export default function Login() {
     e.preventDefault();
 
     try {
-      const res = await axios.post(`${VITE_API_BASE_URL}/api/auth/login`, form);
+      const res = await axios.post(`${API_BASE_URL}/api/auth/login`, form);
 
       const { userData, token } = res.data;
 

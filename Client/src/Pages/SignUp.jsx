@@ -5,7 +5,7 @@ import { motion } from "framer-motion";
 import { Link, useNavigate } from "react-router-dom";
 import axios from "axios";
 import { AuthContext } from "../contexts/AuthContext";
-const VITE_API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
+import { API_BASE_URL } from "@/config/api";
 
 export default function Signup() {
   const [form, setForm] = useState({
@@ -33,10 +33,7 @@ export default function Signup() {
       return alert("Passwords do not match!");
 
     try {
-      const res = await axios.post(
-        `${VITE_API_BASE_URL}/api/auth/signup`,
-        form
-      );
+      const res = await axios.post(`${API_BASE_URL}/api/auth/signup`, form);
 
       const { token, userData } = res.data;
 
