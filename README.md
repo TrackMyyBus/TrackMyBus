@@ -64,7 +64,6 @@ It ensures:
 ## 📈 Roadmap / Future Enhancements
 
 - Push Notifications for delays or arrival  
-- Driver Mobile App  
 - Route based tracking
 
 ---
