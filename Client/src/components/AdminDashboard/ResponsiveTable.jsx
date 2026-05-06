@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { FaSearch, FaPlus, FaTrash, FaSave } from "react-icons/fa";
 import axios from "axios";
 import { API_BASE_URL } from "@/config/api";
+import Swal from "sweetalert2";
 
 export default function ResponsiveTable({
   type,
@@ -56,110 +57,157 @@ export default function ResponsiveTable({
       setShowForm(false);
       setNewItem({});
       refreshData();
-      alert(`${formattedType} created!`);
+      // alert(`${formattedType} created!`);
+      Swal.fire("Success", `${formattedType} created!`, "success");
     } catch (err) {
       console.log(err);
-      alert("Creation failed");
+      Swal.fire("Error", "Creation failed", "error");
     }
   };
 
   /* ---------------------------------------------
      UPDATE
   --------------------------------------------- */
-  const handleUpdate = async () => {
-    try {
-      /** STUDENT UPDATE */
-      if (normalizedType === "student") {
-        await axios.put(
-          `${API_BASE_URL}/api/students/assign/${selectedItem._id}`,
-          {
-            assignedBus: selectedItem.assignedBus,
-            assignedRoute: selectedItem.assignedRoute,
-          },
-          { headers: { Authorization: `Bearer ${token}` } }
-        );
-        alert("Student updated (Bus & Route Assigned)");
-        setShowDrawer(false);
-        refreshData();
-        return;
-      }
-
-      /** DRIVER UPDATE */
-      if (normalizedType === "driver") {
-        await axios.put(
-          `${API_BASE_URL}/api/drivers/assign/${selectedItem._id}`,
-          {
-            assignedBus: selectedItem.assignedBus,
-            assignedRoute: selectedItem.assignedRoute,
-          },
-          { headers: { Authorization: `Bearer ${token}` } }
-        );
-        alert("Driver updated (Bus & Route Assigned)");
-        setShowDrawer(false);
-        refreshData();
-        return;
-      }
-
-      /** BUS UPDATE */
-      if (normalizedType === "bus") {
-        const busId = selectedItem._id;
-
-        if (selectedItem.assignedDriver) {
-          await axios.put(
-            `${API_BASE_URL}/api/buses/assign-driver/${busId}`,
-            { driverId: selectedItem.assignedDriver },
-            { headers: { Authorization: `Bearer ${token}` } }
-          );
-        }
-
-        if (selectedItem.assignedRoute) {
-          await axios.put(
-            `${API_BASE_URL}/api/buses/assign-route/${busId}`,
-            { routeId: selectedItem.assignedRoute },
-            { headers: { Authorization: `Bearer ${token}` } }
-          );
-        }
-
-        alert("Bus updated (Driver/Route Assigned)");
-        setShowDrawer(false);
-        refreshData();
-        return;
-      }
-
-      /** GENERIC UPDATE */
+ const handleUpdate = async () => {
+  try {
+    /** STUDENT UPDATE */
+    if (normalizedType === "student") {
       await axios.put(
-        `${API_BASE_URL}${apiPrefix}/update/${selectedItem._id}`,
-        selectedItem,
+        `${API_BASE_URL}/api/students/assign/${selectedItem._id}`,
+        {
+          assignedBus: selectedItem.assignedBus,
+          assignedRoute: selectedItem.assignedRoute,
+        },
         { headers: { Authorization: `Bearer ${token}` } }
       );
 
-      alert(`${formattedType} updated!`);
+      Swal.fire({
+        icon: "success",
+        title: "Success",
+        text: "Student updated (Bus & Route Assigned)",
+      });
+
       setShowDrawer(false);
       refreshData();
-    } catch (err) {
-      console.log(err);
-      alert("Update failed");
+      return;
     }
-  };
+
+      /** DRIVER UPDATE */
+     if (normalizedType === "driver") {
+  await axios.put(
+    `${API_BASE_URL}/api/drivers/assign/${selectedItem._id}`,
+    {
+      assignedBus: selectedItem.assignedBus,
+      assignedRoute: selectedItem.assignedRoute,
+    },
+    { headers: { Authorization: `Bearer ${token}` } }
+  );
+
+  Swal.fire({
+    icon: "success",
+    title: "Success",
+    text: "Driver updated (Bus & Route Assigned)",
+  });
+
+  setShowDrawer(false);
+  refreshData();
+  return;
+}
+
+      /** BUS UPDATE */
+     if (normalizedType === "bus") {
+  const busId = selectedItem._id;
+
+  if (selectedItem.assignedDriver) {
+    await axios.put(
+      `${API_BASE_URL}/api/buses/assign-driver/${busId}`,
+      { driverId: selectedItem.assignedDriver },
+      { headers: { Authorization: `Bearer ${token}` } }
+    );
+  }
+
+  if (selectedItem.assignedRoute) {
+    await axios.put(
+      `${API_BASE_URL}/api/buses/assign-route/${busId}`,
+      { routeId: selectedItem.assignedRoute },
+      { headers: { Authorization: `Bearer ${token}` } }
+    );
+  }
+
+  Swal.fire({
+    icon: "success",
+    title: "Success",
+    text: "Bus updated (Driver/Route Assigned)",
+  });
+
+  setShowDrawer(false);
+  refreshData();
+  return;
+}
+      /** GENERIC UPDATE */
+    await axios.put(
+  `${API_BASE_URL}${apiPrefix}/update/${selectedItem._id}`,
+  selectedItem,
+  { headers: { Authorization: `Bearer ${token}` } }
+);
+
+Swal.fire({
+  icon: "success",
+  title: "Success",
+  text: `${formattedType} updated!`,
+});
+
+setShowDrawer(false);
+refreshData();
+} catch (err) {
+  console.log(err);
+
+  Swal.fire({
+    icon: "error",
+    title: "Error",
+    text: "Update failed",
+  });
+}
+};
 
   /* ---------------------------------------------
      DELETE
   --------------------------------------------- */
   const deleteItem = async (id) => {
-    if (!window.confirm("Delete this record?")) return;
+  const result = await Swal.fire({
+    title: "Are you sure?",
+    text: "Delete this record?",
+    icon: "warning",
+    showCancelButton: true,
+    confirmButtonColor: "#f59e0b",
+    cancelButtonColor: "#d33",
+    confirmButtonText: "Yes, delete it!",
+  });
 
-    try {
-      await axios.delete(`${API_BASE_URL}${apiPrefix}/delete/${id}`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+  if (!result.isConfirmed) return;
 
-      refreshData();
-      alert("Deleted!");
-    } catch (err) {
-      console.log(err);
-      alert("Delete failed");
-    }
-  };
+  try {
+    await axios.delete(`${API_BASE_URL}${apiPrefix}/delete/${id}`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+
+    refreshData();
+
+    Swal.fire({
+      icon: "success",
+      title: "Deleted!",
+      text: "Record deleted successfully",
+    });
+  } catch (err) {
+    console.log(err);
+
+    Swal.fire({
+      icon: "error",
+      title: "Error",
+      text: "Delete failed",
+    });
+  }
+};
 
   /* ---------------------------------------------
      SEARCH
@@ -597,3 +645,5 @@ function FormSelect({
     </div>
   );
 }
+
+

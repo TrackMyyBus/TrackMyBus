@@ -181,12 +181,12 @@ export default function StudentDashboard() {
 
           {isMenuOpen && (
             <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border z-10">
-              <button
+              {/* <button
                 onClick={() => navigate("/update-password")}
                 className="w-full flex items-center gap-2 px-4 py-2 hover:bg-indigo-50 text-indigo-800"
               >
                 <FaKey /> Reset Password
-              </button>
+              </button> */}
               <button
                 onClick={handleLogout}
                 className="w-full flex items-center gap-2 px-4 py-2 hover:bg-red-50 text-red-600"

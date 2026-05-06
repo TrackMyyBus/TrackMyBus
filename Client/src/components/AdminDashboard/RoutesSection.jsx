@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
 import { API_BASE_URL } from "@/config/api";
+import Swal from "sweetalert2";
 
 // -----------------------------
 // Select Component (FIXED)
@@ -160,31 +161,46 @@ export default function RoutesSection({
       institute: adminId,
     };
 
-    try {
-      if (currentRoute) {
-        await axios.put(
-          `${API_BASE_URL}/api/routes/update/${currentRoute._id}`,
-          payload,
-          { headers: { Authorization: `Bearer ${token}` } }
-        );
-        alert("Route updated!");
-      } else {
-        await axios.post("${API_BASE_URL}/api/routes/create", payload, {
-          headers: { Authorization: `Bearer ${token}` },
-        });
-        alert("Route added!");
-      }
+   try {
+  if (currentRoute) {
+    await axios.put(
+      `${API_BASE_URL}/api/routes/update/${currentRoute._id}`,
+      payload,
+      { headers: { Authorization: `Bearer ${token}` } }
+    );
 
-      setShowForm(false);
-      fetchRoutes();
-      refreshRoutes?.();
-    } catch (err) {
-      console.error("Save route error:", err);
-      alert("Failed to save route.");
-    }
+    Swal.fire({
+      icon: "success",
+      title: "Success",
+      text: "Route updated!",
+    });
+  } else {
+    await axios.post(`${API_BASE_URL}/api/routes/create`, payload, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
 
-    setLoadingStops(false);
-  };
+    Swal.fire({
+      icon: "success",
+      title: "Success",
+      text: "Route added!",
+    });
+  }
+
+  setShowForm(false);
+  fetchRoutes();
+  refreshRoutes?.();
+} catch (err) {
+  console.error("Save route error:", err);
+
+  Swal.fire({
+    icon: "error",
+    title: "Error",
+    text: "Failed to save route.",
+  });
+}
+
+setLoadingStops(false);
+  }
 
   return (
     <div className="w-full bg-gray-50 rounded-2xl p-4">

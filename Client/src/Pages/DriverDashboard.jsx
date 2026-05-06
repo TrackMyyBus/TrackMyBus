@@ -7,6 +7,7 @@ import { Progress } from "@/components/ui/progress";
 import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
 import { useNavigate } from "react-router-dom";
+import Swal from "sweetalert2";
 
 import {
   FaBell,
@@ -146,7 +147,13 @@ export default function DriverDashboard() {
         LOCATION SHARING
   -------------------------------------------- */
   const startLocationSharing = () => {
-    if (!bus?._id) return alert("Bus not assigned!");
+    if (!bus?._id) {
+  return Swal.fire({
+    icon: "warning",
+    title: "Warning",
+    text: "Bus not assigned!",
+  });
+}
 
     socket.emit("driver-start", {
       driverId: driver._id,
@@ -192,7 +199,11 @@ export default function DriverDashboard() {
   -------------------------------------------- */
   const sendNotification = async () => {
     if (!notifyTitle || !notifyMessage)
-      return alert("Please fill title & message");
+    return Swal.fire({
+  icon: "warning",
+  title: "Warning",
+  text: "Please fill title & message",
+});
 
     const payload = {
       title: notifyTitle,
@@ -211,12 +222,17 @@ export default function DriverDashboard() {
 
     const data = await res.json();
 
-    if (data.success) {
-      alert("Notification sent!");
-      setNotifyTitle("");
-      setNotifyMessage("");
-      setShowSendForm(false);
-    }
+   if (data.success) {
+  Swal.fire({
+    icon: "success",
+    title: "Success",
+    text: "Notification sent!",
+  });
+
+  setNotifyTitle("");
+  setNotifyMessage("");
+  setShowSendForm(false);
+}
   };
 
   /* --------------------------------------------
@@ -239,12 +255,12 @@ export default function DriverDashboard() {
 
         {isMenuOpen && (
           <div className="absolute right-0 mt-12 w-48 bg-white rounded-xl shadow-lg border z-50">
-            <button
+            {/* <button
               onClick={() => navigate("/update-password")}
               className="w-full flex items-center gap-2 px-4 py-2 hover:bg-indigo-50 text-indigo-800"
             >
               <FaKey /> Reset Password
-            </button>
+            </button> */}
             <button
               onClick={handleLogout}
               className="w-full flex items-center gap-2 px-4 py-2 hover:bg-red-50 text-red-600"

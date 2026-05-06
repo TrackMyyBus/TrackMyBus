@@ -90,12 +90,12 @@ export default function Sidebar({
         </nav>
 
         <div className="p-2 border-t">
-          <button
+          {/* <button
             onClick={() => navigate("/update-password")}
             className="flex items-center gap-2 w-full p-2 rounded hover:bg-yellow-50 text-yellow-600 transition-colors">
             <FaKey />
             {sidebarOpen && "Reset Password"}
-          </button>
+          </button> */}
 
           <button
             onClick={handleLogout}
@@ -142,12 +142,12 @@ export default function Sidebar({
           </nav>
 
           <div className="p-2 border-t">
-            <button
+            {/* <button
               onClick={() => navigate("/update-password")}
               className="flex items-center gap-2 w-full p-2 rounded hover:bg-yellow-50 text-yellow-600 transition-colors">
               <FaKey />
               <span>Reset Password</span>
-            </button>
+            </button> */}
 
             <button
               onClick={handleLogout}

@@ -6,6 +6,7 @@ import { Link, useNavigate } from "react-router-dom";
 import axios from "axios";
 import { AuthContext } from "../contexts/AuthContext";
 import { API_BASE_URL } from "@/config/api";
+import Swal from "sweetalert2";
 
 export default function Signup() {
   const [form, setForm] = useState({
@@ -30,7 +31,11 @@ export default function Signup() {
     e.preventDefault();
 
     if (form.password !== form.confirmPassword)
-      return alert("Passwords do not match!");
+      return Swal.fire({
+  icon: "error",
+  title: "Error",
+  text: "Passwords do not match!",
+});
 
     try {
       const res = await axios.post(`${API_BASE_URL}/api/auth/signup`, form);
@@ -38,23 +43,39 @@ export default function Signup() {
       const { token, userData } = res.data;
 
       if (!userData || !token) {
-        alert("Invalid server response");
+        Swal.fire({
+  icon: "error",
+  title: "Error",
+  text: "Invalid server response",
+});
         return;
       }
 
       // ⭐ Correct usage — your backend sends userData
       loginUser(userData, token);
 
-      alert("Admin created successfully!");
+      Swal.fire({
+  icon: "success",
+  title: "Success",
+  text: "Admin created successfully!",
+});
       navigate("/admin");
     } catch (err) {
       console.error("Signup Error:", err);
 
-      if (err.response?.status === 400) {
-        alert(err.response.data.message || "Email already exists");
-      } else {
-        alert("Signup failed. Try again.");
-      }
+     if (err.response?.status === 400) {
+  Swal.fire({
+    icon: "error",
+    title: "Error",
+    text: err.response.data.message || "Email already exists",
+  });
+} else {
+  Swal.fire({
+    icon: "error",
+    title: "Error",
+    text: "Signup failed. Try again.",
+  });
+}
     }
   };
 

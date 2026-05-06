@@ -4,6 +4,7 @@ import { API_BASE_URL } from "@/config/api";
 
 import { motion } from "framer-motion";
 import { Link, useNavigate } from "react-router-dom";
+import Swal from "sweetalert2";
 import { AuthContext } from "../contexts/AuthContext";
 
 export default function Login() {
@@ -32,13 +33,21 @@ export default function Login() {
         token
       );
 
-      alert("Login successful!");
+      Swal.fire({
+  icon: "success",
+  title: "Success",
+  text: "Login successful!",
+});
 
       const role = userData.role?.toLowerCase().trim();
 
       navigate(role === "admin" ? "/admin" : `/${role}`);
     } catch (err) {
-      alert(err.response?.data?.message || "Login failed");
+      Swal.fire({
+  icon: "error",
+  title: "Login Failed",
+  text: err.response?.data?.message || "Login failed",
+});
     }
   };
 
@@ -70,7 +79,7 @@ export default function Login() {
           </button>
 
           <div className="mt-4 text-center space-y-2">
-            <p className="text-sm text-gray-600">
+            {/* <p className="text-sm text-gray-600">
               Forgot your password?{" "}
               <Link
                 to="/update-password"
@@ -78,7 +87,7 @@ export default function Login() {
               >
                 Reset Password
               </Link>
-            </p>
+            </p> */}
 
             <p className="text-sm text-gray-600">
               Don't have an account?{" "}
