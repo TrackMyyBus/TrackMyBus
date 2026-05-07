@@ -3,7 +3,7 @@ import React from "react";
 import Hero from "@/components/Hero";
 import Navbar from "@/components/Navbar";
 import Features from "@/components/Features";
-import Contact from "@/components/Contact";
+// import Contact from "@/components/Contact";
 
 export default function Home() {
   return (
@@ -11,7 +11,7 @@ export default function Home() {
       <Navbar />
       <Hero />
       <Features />
-      <Contact />
+      {/* <Contact /> */}
       <footer className="py-6 text-center bg-gray-50 border-t border-gray-200">
         <p className="text-sm text-slate-600">
           © {new Date().getFullYear()} TrackMyBus — Built with ❤️ for safe

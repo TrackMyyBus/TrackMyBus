@@ -26,7 +26,8 @@ function SingleSelect({
         value={safeValue}
         onChange={(e) =>
           setNewItem((prev) => ({ ...prev, [field]: e.target.value }))
-        }>
+        }
+      >
         <option value="">Select</option>
         {Array.isArray(options) &&
           options.map((opt) => (
@@ -116,9 +117,10 @@ export default function RoutesSection({
   const geocodeLocation = async (place) => {
     try {
       const res = await axios.get(
-        `${API_BASE_URL}/api/geocode?place=${encodeURIComponent(place)}`
+        `${API_BASE_URL}/api/geocode?place=${encodeURIComponent(place)}`,
       );
       return { lat: res.data.lat, lon: res.data.lon };
+      // eslint-disable-next-line no-unused-vars
     } catch (err) {
       return { lat: 0, lon: 0 };
     }
@@ -161,46 +163,46 @@ export default function RoutesSection({
       institute: adminId,
     };
 
-   try {
-  if (currentRoute) {
-    await axios.put(
-      `${API_BASE_URL}/api/routes/update/${currentRoute._id}`,
-      payload,
-      { headers: { Authorization: `Bearer ${token}` } }
-    );
+    try {
+      if (currentRoute) {
+        await axios.put(
+          `${API_BASE_URL}/api/routes/update/${currentRoute._id}`,
+          payload,
+          { headers: { Authorization: `Bearer ${token}` } },
+        );
 
-    Swal.fire({
-      icon: "success",
-      title: "Success",
-      text: "Route updated!",
-    });
-  } else {
-    await axios.post(`${API_BASE_URL}/api/routes/create`, payload, {
-      headers: { Authorization: `Bearer ${token}` },
-    });
+        Swal.fire({
+          icon: "success",
+          title: "Success",
+          text: "Route updated!",
+        });
+      } else {
+        await axios.post(`${API_BASE_URL}/api/routes/create`, payload, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
 
-    Swal.fire({
-      icon: "success",
-      title: "Success",
-      text: "Route added!",
-    });
-  }
+        Swal.fire({
+          icon: "success",
+          title: "Success",
+          text: "Route added!",
+        });
+      }
 
-  setShowForm(false);
-  fetchRoutes();
-  refreshRoutes?.();
-} catch (err) {
-  console.error("Save route error:", err);
+      setShowForm(false);
+      fetchRoutes();
+      refreshRoutes?.();
+    } catch (err) {
+      console.error("Save route error:", err);
 
-  Swal.fire({
-    icon: "error",
-    title: "Error",
-    text: "Failed to save route.",
-  });
-}
+      Swal.fire({
+        icon: "error",
+        title: "Error",
+        text: "Failed to save route.",
+      });
+    }
 
-setLoadingStops(false);
-  }
+    setLoadingStops(false);
+  };
 
   return (
     <div className="w-full bg-gray-50 rounded-2xl p-4">
@@ -210,7 +212,8 @@ setLoadingStops(false);
         </h2>
         <button
           onClick={openAddForm}
-          className="bg-yellow-500 text-white px-4 py-2 rounded-xl">
+          className="bg-yellow-500 text-white px-4 py-2 rounded-xl"
+        >
           Add Route
         </button>
       </div>
@@ -221,7 +224,8 @@ setLoadingStops(false);
           <div className="bg-white rounded-2xl p-6 w-full max-w-md relative shadow-lg">
             <button
               className="absolute top-4 right-4 text-xl"
-              onClick={() => setShowForm(false)}>
+              onClick={() => setShowForm(false)}
+            >
               ✕
             </button>
 
@@ -331,7 +335,8 @@ setLoadingStops(false);
                   ...prev,
                   [route._id]: !prev[route._id],
                 }))
-              }>
+              }
+            >
               <div>
                 <h3 className="text-lg font-bold">{route.routeName}</h3>
                 <p className="text-gray-500 text-sm">
@@ -344,7 +349,8 @@ setLoadingStops(false);
                   e.stopPropagation();
                   openEditForm(route);
                 }}
-                className="text-yellow-500 font-semibold">
+                className="text-yellow-500 font-semibold"
+              >
                 Edit
               </button>
             </div>
@@ -354,7 +360,8 @@ setLoadingStops(false);
                 {route.stops?.map((stop) => (
                   <li
                     key={stop._id}
-                    className="bg-yellow-50 p-2 rounded text-sm">
+                    className="bg-yellow-50 p-2 rounded text-sm"
+                  >
                     <strong>{stop.name}</strong>
                     <br />
                     <span className="text-gray-500 text-xs">

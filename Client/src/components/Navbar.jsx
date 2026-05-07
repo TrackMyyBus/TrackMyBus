@@ -33,28 +33,32 @@ const Navbar = () => {
             ? "bg-transparent md:fixed md:top-0"
             : "bg-white md:fixed md:top-0 shadow"
         } 
-      `}>
+      `}
+    >
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex items-center justify-end">
         <nav className="flex items-center gap-6">
           <ScrollLink
             to="hero"
             smooth={true}
             duration={500}
-            className={linkClass}>
+            className={linkClass}
+          >
             Home
           </ScrollLink>
           <ScrollLink
             to="features"
             smooth={true}
             duration={500}
-            className={linkClass}>
+            className={linkClass}
+          >
             Features
           </ScrollLink>
           <ScrollLink
             to="contact"
             smooth={true}
             duration={500}
-            className={linkClass}>
+            className={linkClass}
+          >
             Contact
           </ScrollLink>
           <RouterLink to="/login">
