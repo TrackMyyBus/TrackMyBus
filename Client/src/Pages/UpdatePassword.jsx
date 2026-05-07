@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { motion } from "framer-motion";
+// import { motion } from "framer-motion";
 import { Link, useNavigate } from "react-router-dom";
 import axios from "axios";
 import { API_BASE_URL } from "@/config/api";

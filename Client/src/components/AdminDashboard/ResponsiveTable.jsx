@@ -68,152 +68,152 @@ export default function ResponsiveTable({
   /* ---------------------------------------------
      UPDATE
   --------------------------------------------- */
- const handleUpdate = async () => {
-  try {
-    /** STUDENT UPDATE */
-    if (normalizedType === "student") {
+  const handleUpdate = async () => {
+    try {
+      /** STUDENT UPDATE */
+      if (normalizedType === "student") {
+        await axios.put(
+          `${API_BASE_URL}/api/students/assign/${selectedItem._id}`,
+          {
+            assignedBus: selectedItem.assignedBus,
+            assignedRoute: selectedItem.assignedRoute,
+          },
+          { headers: { Authorization: `Bearer ${token}` } },
+        );
+
+        Swal.fire({
+          icon: "success",
+          title: "Success",
+          text: "Student updated (Bus & Route Assigned)",
+        });
+
+        setShowDrawer(false);
+        refreshData();
+        return;
+      }
+
+      /** DRIVER UPDATE */
+      if (normalizedType === "driver") {
+        await axios.put(
+          `${API_BASE_URL}/api/drivers/assign/${selectedItem._id}`,
+          {
+            assignedBus: selectedItem.assignedBus,
+            assignedRoute: selectedItem.assignedRoute,
+          },
+          { headers: { Authorization: `Bearer ${token}` } },
+        );
+
+        Swal.fire({
+          icon: "success",
+          title: "Success",
+          text: "Driver updated (Bus & Route Assigned)",
+        });
+
+        setShowDrawer(false);
+        refreshData();
+        return;
+      }
+
+      /** BUS UPDATE */
+      if (normalizedType === "bus") {
+        const busId = selectedItem._id;
+
+        if (selectedItem.assignedDriver) {
+          await axios.put(
+            `${API_BASE_URL}/api/buses/assign-driver/${busId}`,
+            { driverId: selectedItem.assignedDriver },
+            { headers: { Authorization: `Bearer ${token}` } },
+          );
+        }
+
+        if (selectedItem.assignedRoute) {
+          await axios.put(
+            `${API_BASE_URL}/api/buses/assign-route/${busId}`,
+            { routeId: selectedItem.assignedRoute },
+            { headers: { Authorization: `Bearer ${token}` } },
+          );
+        }
+
+        Swal.fire({
+          icon: "success",
+          title: "Success",
+          text: "Bus updated (Driver/Route Assigned)",
+        });
+
+        setShowDrawer(false);
+        refreshData();
+        return;
+      }
+      /** GENERIC UPDATE */
       await axios.put(
-        `${API_BASE_URL}/api/students/assign/${selectedItem._id}`,
-        {
-          assignedBus: selectedItem.assignedBus,
-          assignedRoute: selectedItem.assignedRoute,
-        },
-        { headers: { Authorization: `Bearer ${token}` } }
+        `${API_BASE_URL}${apiPrefix}/update/${selectedItem._id}`,
+        selectedItem,
+        { headers: { Authorization: `Bearer ${token}` } },
       );
 
       Swal.fire({
         icon: "success",
         title: "Success",
-        text: "Student updated (Bus & Route Assigned)",
+        text: `${formattedType} updated!`,
       });
 
       setShowDrawer(false);
       refreshData();
-      return;
+    } catch (err) {
+      console.log(err);
+
+      Swal.fire({
+        icon: "error",
+        title: "Error",
+        text: "Update failed",
+      });
     }
-
-      /** DRIVER UPDATE */
-     if (normalizedType === "driver") {
-  await axios.put(
-    `${API_BASE_URL}/api/drivers/assign/${selectedItem._id}`,
-    {
-      assignedBus: selectedItem.assignedBus,
-      assignedRoute: selectedItem.assignedRoute,
-    },
-    { headers: { Authorization: `Bearer ${token}` } }
-  );
-
-  Swal.fire({
-    icon: "success",
-    title: "Success",
-    text: "Driver updated (Bus & Route Assigned)",
-  });
-
-  setShowDrawer(false);
-  refreshData();
-  return;
-}
-
-      /** BUS UPDATE */
-     if (normalizedType === "bus") {
-  const busId = selectedItem._id;
-
-  if (selectedItem.assignedDriver) {
-    await axios.put(
-      `${API_BASE_URL}/api/buses/assign-driver/${busId}`,
-      { driverId: selectedItem.assignedDriver },
-      { headers: { Authorization: `Bearer ${token}` } }
-    );
-  }
-
-  if (selectedItem.assignedRoute) {
-    await axios.put(
-      `${API_BASE_URL}/api/buses/assign-route/${busId}`,
-      { routeId: selectedItem.assignedRoute },
-      { headers: { Authorization: `Bearer ${token}` } }
-    );
-  }
-
-  Swal.fire({
-    icon: "success",
-    title: "Success",
-    text: "Bus updated (Driver/Route Assigned)",
-  });
-
-  setShowDrawer(false);
-  refreshData();
-  return;
-}
-      /** GENERIC UPDATE */
-    await axios.put(
-  `${API_BASE_URL}${apiPrefix}/update/${selectedItem._id}`,
-  selectedItem,
-  { headers: { Authorization: `Bearer ${token}` } }
-);
-
-Swal.fire({
-  icon: "success",
-  title: "Success",
-  text: `${formattedType} updated!`,
-});
-
-setShowDrawer(false);
-refreshData();
-} catch (err) {
-  console.log(err);
-
-  Swal.fire({
-    icon: "error",
-    title: "Error",
-    text: "Update failed",
-  });
-}
-};
+  };
 
   /* ---------------------------------------------
      DELETE
   --------------------------------------------- */
   const deleteItem = async (id) => {
-  const result = await Swal.fire({
-    title: "Are you sure?",
-    text: "Delete this record?",
-    icon: "warning",
-    showCancelButton: true,
-    confirmButtonColor: "#f59e0b",
-    cancelButtonColor: "#d33",
-    confirmButtonText: "Yes, delete it!",
-  });
-
-  if (!result.isConfirmed) return;
-
-  try {
-    await axios.delete(`${API_BASE_URL}${apiPrefix}/delete/${id}`, {
-      headers: { Authorization: `Bearer ${token}` },
+    const result = await Swal.fire({
+      title: "Are you sure?",
+      text: "Delete this record?",
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonColor: "#f59e0b",
+      cancelButtonColor: "#d33",
+      confirmButtonText: "Yes, delete it!",
     });
 
-    refreshData();
+    if (!result.isConfirmed) return;
 
-    Swal.fire({
-      icon: "success",
-      title: "Deleted!",
-      text: "Record deleted successfully",
-    });
-  } catch (err) {
-    console.log(err);
+    try {
+      await axios.delete(`${API_BASE_URL}${apiPrefix}/delete/${id}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
 
-    Swal.fire({
-      icon: "error",
-      title: "Error",
-      text: "Delete failed",
-    });
-  }
-};
+      refreshData();
+
+      Swal.fire({
+        icon: "success",
+        title: "Deleted!",
+        text: "Record deleted successfully",
+      });
+    } catch (err) {
+      console.log(err);
+
+      Swal.fire({
+        icon: "error",
+        title: "Error",
+        text: "Delete failed",
+      });
+    }
+  };
 
   /* ---------------------------------------------
      SEARCH
   --------------------------------------------- */
   const filteredItems = items.filter((item) =>
-    JSON.stringify(item).toLowerCase().includes(search.toLowerCase())
+    JSON.stringify(item).toLowerCase().includes(search.toLowerCase()),
   );
 
   /* ---------------------------------------------
@@ -247,7 +247,8 @@ refreshData();
         value={selectedItem?.[field] || ""}
         onChange={(e) =>
           setSelectedItem((prev) => ({ ...prev, [field]: e.target.value }))
-        }>
+        }
+      >
         <option value="">Select</option>
         {options.map((opt) => (
           <option key={opt._id} value={opt._id}>
@@ -401,7 +402,7 @@ refreshData();
       {/* Header */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 gap-3">
         <h2 className="text-2xl sm:text-3xl font-bold text-indigo-900">
-          {formattedType}s
+          {formattedType === "Bus" ? "Buses" : `${formattedType}s`}
         </h2>
 
         <div className="flex items-center gap-3 w-full sm:w-auto">
@@ -418,7 +419,8 @@ refreshData();
 
           <button
             onClick={() => setShowForm(true)}
-            className="bg-yellow-500 text-white px-4 py-2 rounded-xl flex gap-2">
+            className="bg-yellow-500 text-white px-4 py-2 rounded-xl flex gap-2"
+          >
             <FaPlus /> Add {formattedType}
           </button>
         </div>
@@ -433,7 +435,8 @@ refreshData();
               setSelectedItem(item);
               setShowDrawer(true);
             }}
-            className="cursor-pointer border shadow-sm rounded-xl p-4 bg-white hover:shadow-lg transition">
+            className="cursor-pointer border shadow-sm rounded-xl p-4 bg-white hover:shadow-lg transition"
+          >
             <h3 className="text-lg font-semibold text-indigo-800">
               {item.name || item.driverId || item.busId}
             </h3>
@@ -473,7 +476,8 @@ refreshData();
           <div className="w-full max-w-xs sm:max-w-md md:max-w-lg bg-white h-full shadow-xl p-6 overflow-y-auto">
             <button
               className="absolute top-4 right-4 text-2xl"
-              onClick={() => setShowDrawer(false)}>
+              onClick={() => setShowDrawer(false)}
+            >
               ✕
             </button>
 
@@ -555,13 +559,15 @@ refreshData();
             <div className="mt-6 flex gap-3">
               <button
                 className="bg-yellow-500 text-white px-4 py-2 rounded-lg w-full"
-                onClick={handleUpdate}>
+                onClick={handleUpdate}
+              >
                 <FaSave className="inline mr-1" /> Save
               </button>
 
               <button
                 className="bg-red-500 text-white px-4 py-2 rounded-lg w-full"
-                onClick={() => deleteItem(selectedItem._id)}>
+                onClick={() => deleteItem(selectedItem._id)}
+              >
                 <FaTrash className="inline mr-1" /> Delete
               </button>
             </div>
@@ -575,7 +581,8 @@ refreshData();
           <div className="bg-white p-6 rounded-xl shadow-xl w-full max-w-xl relative max-h-[90vh] overflow-y-auto">
             <button
               className="absolute top-4 right-4 text-xl"
-              onClick={() => setShowForm(false)}>
+              onClick={() => setShowForm(false)}
+            >
               ✕
             </button>
 
@@ -633,7 +640,8 @@ function FormSelect({
         className="w-full border p-2 rounded-lg"
         onChange={(e) =>
           setNewItem((prev) => ({ ...prev, [field]: e.target.value }))
-        }>
+        }
+      >
         <option value="">Select</option>
 
         {safe.map((opt) => (
@@ -645,5 +653,3 @@ function FormSelect({
     </div>
   );
 }
-
-
